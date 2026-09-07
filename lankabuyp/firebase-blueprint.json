@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "E-commerce product catalog item with price and metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "wholesaleCost": { "type": "number" },
+        "sku": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "stock": { "type": "number" },
+        "creemProductId": { "type": "string" }
+      },
+      "required": ["id", "title", "price", "category", "sku"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Authenticated user profile and metadata",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastLogin": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "UserAddress": {
+      "title": "UserAddress",
+      "description": "Customer saved shipping and delivery addresses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "addressLine": { "type": "string" },
+        "city": { "type": "string" },
+        "province": { "type": "string" },
+        "postalCode": { "type": "string" },
+        "isDefault": { "type": "boolean" }
+      },
+      "required": ["id", "fullName", "phone", "addressLine", "city"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "E-commerce checkout order record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "orderNumber", "totalAmount", "status"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Catalog products accessible for browsing"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Customer user profile documents"
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": "UserAddress",
+      "description": "Customer delivery addresses"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer purchase orders and tracking records"
+    }
+  }
+}

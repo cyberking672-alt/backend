@@ -1,0 +1,6 @@
+{
+  "name": "LankaBuy",
+  "description": "Premium Sri Lankan dropshipping e-commerce marketplace with automated supplier fulfillment, local delivery tracking, and secure Node.js backend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

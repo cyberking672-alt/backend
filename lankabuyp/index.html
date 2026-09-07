@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" style="background-color: #0f172a; color-scheme: dark;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>LankaBuy - Sri Lanka's Premier Dropshipping Marketplace</title>
+    <meta name="description" content="LankaBuy - Premium Sri Lankan e-commerce and dropshipping marketplace powered by Node.js, Express, and automated supplier air fulfillment." />
+    <meta property="og:title" content="LankaBuy - Premium Dropshipping Marketplace" />
+    <meta property="og:description" content="Shop verified smart tech, gadgets, and lifestyle goods with islandwide express delivery on LankaBuy." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      // 100% White Screen & Loading Lock Prevention Guard
+      window.__dismissLankaBuyLoader = function() {
+        var loader = document.getElementById('lankabuy-loader');
+        if (loader) {
+          loader.style.opacity = '0';
+          loader.style.transition = 'opacity 0.25s ease-out';
+          setTimeout(function() {
+            if (loader && loader.parentNode) {
+              loader.parentNode.removeChild(loader);
+            }
+          }, 250);
+        }
+      };
+
+      // Safety timeout: if React hasn't mounted in 12 seconds, show a reload button instead of blank space
+      setTimeout(function() {
+        var loader = document.getElementById('lankabuy-loader');
+        if (loader) {
+          var btn = document.getElementById('lankabuy-loader-reload-btn');
+          if (btn) btn.style.display = 'inline-block';
+        }
+      }, 12000);
+
+      window.addEventListener('unhandledrejection', function(event) {
+        var msg = String(event.reason && (event.reason.message || event.reason));
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('websocket') !== -1) {
+          // Expected HMR websocket state in cloud sandbox container
+          return;
+        }
+        console.warn('[LankaBuy Promise Catch]:', event.reason);
+      });
+      window.addEventListener('error', function(e) {
+        var msg = String(e.message || (e.error && e.error.message) || '');
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('websocket') !== -1) {
+          return;
+        }
+        console.error('[LankaBuy Global Error Catch]:', e.error || e.message);
+      });
+    </script>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #0f172a; color: #ffffff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent;">
+    <div id="root"></div>
+
+    <div id="lankabuy-loader" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0f172a; color: #ffffff; text-align: center; padding: 20px; box-sizing: border-box; pointer-events: none;">
+      <div style="width: 72px; height: 72px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.4);">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+      </div>
+      <h2 style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin: 0 0 6px; font-family: 'Outfit', sans-serif;">Lanka<span style="color: #f97316;">Buy</span></h2>
+      <p style="font-size: 13px; color: #94a3b8; margin: 0 0 28px; font-weight: 500;">Sri Lanka's Premier Dropshipping Marketplace</p>
+      <div style="width: 36px; height: 36px; border: 3.5px solid rgba(249, 115, 22, 0.2); border-top-color: #f97316; border-radius: 50%; animation: lankabuy-spin 0.7s linear infinite; margin: 0 auto 16px;"></div>
+      <p style="font-size: 12px; color: #f97316; font-weight: 700; margin: 0;">Loading LankaBuy App...</p>
+      <button id="lankabuy-loader-reload-btn" onclick="window.location.reload()" style="display: none; margin-top: 16px; padding: 8px 16px; background-color: #f97316; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; pointer-events: auto;">Reload Page</button>
+      <style>
+        @keyframes lankabuy-spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

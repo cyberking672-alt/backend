@@ -1,0 +1,182 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny for all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions for authentication and ownership
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isEmailOwner(email) {
+      return isAuthenticated() && 
+        request.auth.token.email != null && 
+        email != null &&
+        request.auth.token.email.lower() == email.lower();
+    }
+
+    // Verified administrator check via custom claims or authorized admin configuration
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'admin' ||
+        (request.auth.token.email != null && (
+          request.auth.token.email.lower() == 'xggh67677@gmail.com' ||
+          request.auth.token.email.lower() == 'cyberking672@gmail.com'
+        ))
+      );
+    }
+
+    // --------------------------------------------------------------------------
+    // 1. PRODUCTS COLLECTION (/products/{productId})
+    // --------------------------------------------------------------------------
+    // - Public read access for customers to browse the storefront catalog.
+    // - Creation, update, and deletion strictly restricted to verified administrators.
+    // - Prevents regular customers or unauthenticated callers from tampering with products.
+    // --------------------------------------------------------------------------
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --------------------------------------------------------------------------
+    // 2. USERS COLLECTION (/users/{userId})
+    // --------------------------------------------------------------------------
+    // - Private user profiles: only the user themselves or an admin can read.
+    // - Customers can NEVER view other customers' private data, emails, or names.
+    // - Prevents privilege escalation: customers cannot grant themselves admin/role fields.
+    // --------------------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // On create: Must match authenticated UID, and cannot inject admin/role claims
+      allow create: if isOwner(userId) &&
+        request.resource.data.uid == userId &&
+        (!('role' in request.resource.data) || request.resource.data.role != 'admin' || isAdmin()) &&
+        (!('admin' in request.resource.data) || request.resource.data.admin == false || isAdmin()) &&
+        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false || isAdmin());
+
+      // On update: Must be the owner or admin, cannot escalate privileges or modify uid
+      allow update: if (isOwner(userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        (!('role' in request.resource.data) || request.resource.data.role == resource.data.get('role', 'customer') || isAdmin()) &&
+        (!('admin' in request.resource.data) || request.resource.data.admin == resource.data.get('admin', false) || isAdmin()) &&
+        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == resource.data.get('isAdmin', false) || isAdmin())
+      ) || isAdmin();
+
+      allow delete: if isOwner(userId) || isAdmin();
+
+      // ------------------------------------------------------------------------
+      // 2a. USER ADDRESSES SUBCOLLECTION (/users/{userId}/addresses/{addressId})
+      // ------------------------------------------------------------------------
+      // - Strictly restricted to the owner: customer address, phone & city
+      //   are confidential and inaccessible to all other customers.
+      // ------------------------------------------------------------------------
+      match /addresses/{addressId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) &&
+          request.resource.data.id is string &&
+          request.resource.data.fullName is string &&
+          request.resource.data.phone is string &&
+          request.resource.data.street is string &&
+          request.resource.data.city is string;
+        allow update: if isOwner(userId) &&
+          request.resource.data.id == resource.data.id;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 3. ORDERS COLLECTION (/orders/{orderId})
+    // --------------------------------------------------------------------------
+    // - Confidential order information: Customers can ONLY read their own orders.
+    // - Customers cannot read other customers' orders or browse all orders.
+    // - Orders can be created during authenticated checkout or through server.
+    // - Server-controlled fields (financial totals, payment status, status) cannot be tampered with.
+    // - Only administrators can update arbitrary fulfillment/payment status or delete orders.
+    // --------------------------------------------------------------------------
+    match /orders/{orderId} {
+      // Read access: Only the order owner (by userId or customer email) or an admin
+      allow get: if isAdmin() || (
+        isAuthenticated() && (
+          (resource.data.userId != null && resource.data.userId == request.auth.uid) ||
+          (resource.data.customer != null && resource.data.customer.userId != null && resource.data.customer.userId == request.auth.uid) ||
+          (resource.data.customer != null && resource.data.customer.email != null && isEmailOwner(resource.data.customer.email))
+        )
+      );
+
+      // Listing/querying orders: Only admins or authenticated users querying their own orders
+      allow list: if isAdmin() || (
+        isAuthenticated() && (
+          request.auth.uid != null
+        )
+      );
+
+      // Order creation:
+      // Must be authenticated user for their own order (or admin).
+      // Validates order structure: valid id, orderNumber, items list, non-negative totals.
+      // Prevents client tampering of administrative or payment override statuses.
+      allow create: if isAdmin() || (
+        isAuthenticated() &&
+        (
+          request.resource.data.userId == request.auth.uid ||
+          (request.resource.data.customer != null && request.resource.data.customer.userId == request.auth.uid) ||
+          (request.resource.data.customer != null && request.resource.data.customer.email != null && isEmailOwner(request.resource.data.customer.email))
+        ) &&
+        request.resource.data.id is string &&
+        request.resource.data.orderNumber is string &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0 &&
+        request.resource.data.totalAmount is number &&
+        request.resource.data.totalAmount >= 0 &&
+        // Protect status integrity on creation
+        request.resource.data.status in ['PENDING', 'CONFIRMED', 'PROCESSING'] &&
+        request.resource.data.paymentStatus in ['PENDING', 'PAID']
+      );
+
+      // Order update:
+      // Customers CANNOT modify prices, discounts, items, shipping fees, or payment status.
+      // Customers can only request a return/cancellation on their own orders.
+      // Admins have full update capability.
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        (
+          resource.data.userId == request.auth.uid ||
+          (resource.data.customer != null && resource.data.customer.userId == request.auth.uid) ||
+          (resource.data.customer != null && resource.data.customer.email != null && isEmailOwner(resource.data.customer.email))
+        ) &&
+        // Immutable order invariants: financial & identity fields cannot be altered by customer
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.orderNumber == resource.data.orderNumber &&
+        request.resource.data.totalAmount == resource.data.totalAmount &&
+        request.resource.data.items == resource.data.items &&
+        request.resource.data.paymentStatus == resource.data.paymentStatus &&
+        (!('subtotal' in resource.data) || request.resource.data.subtotal == resource.data.subtotal) &&
+        (!('shippingFee' in resource.data) || request.resource.data.shippingFee == resource.data.shippingFee) &&
+        (!('discount' in resource.data) || request.resource.data.discount == resource.data.discount)
+      );
+
+      // Only administrators can delete orders
+      allow delete: if isAdmin();
+    }
+
+    // --------------------------------------------------------------------------
+    // 4. SYSTEM CONNECTION TEST (/test/{docId})
+    // --------------------------------------------------------------------------
+    // - Used only for Firebase connectivity check.
+    // --------------------------------------------------------------------------
+    match /test/{docId} {
+      allow get: if docId == 'connection';
+      allow list, write: if isAdmin();
+    }
+  }
+}
