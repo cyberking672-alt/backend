@@ -1,0 +1,4 @@
+- generic [active] [ref=f1e1]:
+  - status [ref=f1e2]:
+    - generic [ref=f1e3]: This is a test checkout — no real payment is taken and no card is charged.
+  - main [ref=f1e5]

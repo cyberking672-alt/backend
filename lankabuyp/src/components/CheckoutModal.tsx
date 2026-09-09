@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CartItem, ShippingAddress, Order } from '../types';
 import { InteractivePaymentForm } from './InteractivePaymentForm';
+import { getFirebaseIdToken } from '../lib/firebase';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -211,11 +212,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
       // 🛡️ STRICT BACKEND PRICE CALCULATION & IDEMPOTENCY
       const idempotencyKey = `idem-${formData.phone.replace(/[^0-9]/g, '')}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const idToken = await getFirebaseIdToken();
+      if (!idToken) {
+        throw new Error('Please sign in before placing an order.');
+      }
       const response = await fetch('/api/checkout/init', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Idempotency-Key': idempotencyKey,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           customer: formData,

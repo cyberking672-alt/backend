@@ -19,11 +19,16 @@ export class RedisCacheEngine {
   private totalOps = 0;
   private opsStartTime = Date.now();
   private maxMemoryMb = 512;
+  private sweepTimer: NodeJS.Timeout;
 
   constructor(maxMemoryMb = 512) {
     this.maxMemoryMb = maxMemoryMb;
     // Periodic sweep for expired keys every 15 seconds
-    setInterval(() => this.sweepExpired(), 15000);
+    this.sweepTimer = setInterval(() => this.sweepExpired(), 15000);
+  }
+
+  public stop(): void {
+    clearInterval(this.sweepTimer);
   }
 
   /**

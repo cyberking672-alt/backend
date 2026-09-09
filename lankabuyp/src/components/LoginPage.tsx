@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
   ShoppingBag, 
   Mail, 
@@ -14,16 +14,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { 
-  signInWithGoogleIdToken,
+  signInWithGoogle,
   signInWithEmail, 
   signUpWithEmail, 
-  checkRedirectAuthResult, 
-  auth, 
-  onAuthStateChanged 
 } from '../lib/firebase';
 import { UserProfile, PendingCheckoutIntent } from '../types';
 import { LankaBuyLogo } from './LankaBuyLogo';
-import firebaseConfig from '../../firebase-applet-config.json';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -40,111 +36,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const authProcessedRef = useRef(false);
-  const gsiContainerRef = useRef<HTMLDivElement>(null);
-
-  // Google Identity Services (GSI) One-Click Sign-In Setup
-  useEffect(() => {
-    const initGsi = () => {
-      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-        try {
-          const clientId = (firebaseConfig as any).oAuthClientId || (firebaseConfig as any).client_id;
-          if (clientId) {
-            (window as any).google.accounts.id.initialize({
-              client_id: clientId,
-              callback: async (response: any) => {
-                if (response?.credential) {
-                  setGoogleLoading(true);
-                  setError(null);
-                  try {
-                    const user = await signInWithGoogleIdToken(response.credential);
-                    authProcessedRef.current = true;
-                    setGoogleLoading(false);
-                    onLoginSuccess(user);
-                  } catch (err: any) {
-                    setGoogleLoading(false);
-                    const code = err?.code || 'GSI_AUTH_ERROR';
-                    const msg = err?.message || String(err);
-                    setError(`[${code}] ${msg.replace(/^Firebase:\s*/, '')}`);
-                  }
-                }
-              },
-              auto_select: false,
-              cancel_on_tap_outside: true,
-            });
-
-            if (gsiContainerRef.current) {
-              (window as any).google.accounts.id.renderButton(gsiContainerRef.current, {
-                theme: 'outline',
-                size: 'large',
-                type: 'standard',
-                shape: 'rectangular',
-                text: 'signin_with',
-                logo_alignment: 'left',
-                width: 320,
-              });
-            }
-          }
-        } catch (e: any) {
-          console.warn('[GSI Init Notice]:', e);
-        }
-      }
-    };
-
-    initGsi();
-    const t1 = setTimeout(initGsi, 500);
-    const t2 = setTimeout(initGsi, 1500);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [onLoginSuccess]);
-
-  // Check for redirect result on return
-  useEffect(() => {
-    let isMounted = true;
-
-    checkRedirectAuthResult()
-      .then((user) => {
-        if (user && isMounted && !authProcessedRef.current) {
-          authProcessedRef.current = true;
-          setGoogleLoading(false);
-          onLoginSuccess(user);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setGoogleLoading(false);
-          setError(err?.message || 'Authentication failed on redirect.');
-        }
-      });
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser && isMounted && !authProcessedRef.current) {
-        authProcessedRef.current = true;
-        const profile: UserProfile = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Customer',
-          photoURL: firebaseUser.photoURL || undefined,
-          createdAt: new Date().toISOString(),
-        };
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      console.info('[Auth] Google login button pressed');
+      const user = await signInWithGoogle();
+      if (user) {
         setGoogleLoading(false);
-        setLoading(false);
-        onLoginSuccess(profile);
+      } else {
+        // App-level Firebase auth state handling completes the transition.
       }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, [onLoginSuccess]);
+    } catch (err: any) {
+      const code = err?.code || 'auth/unknown';
+      const messages: Record<string, string> = {
+        'auth/popup-closed-by-user': 'The Google sign-in window was closed before completion.',
+        'auth/popup-blocked': 'Your browser blocked the Google sign-in window. Please allow popups and try again.',
+        'auth/unauthorized-domain': 'This site is not authorized in Firebase Authentication. Add the current host to Firebase Authorized Domains.',
+        'auth/operation-not-allowed': 'Google sign-in is disabled in Firebase Authentication. Enable the Google provider in Firebase Console.',
+        'auth/account-exists-with-different-credential': 'An account already exists with a different sign-in method for this email.',
+      };
+      setError(messages[code] || `[${code}] ${(err?.message || 'Google sign-in failed.').replace(/^Firebase:\s*/, '')}`);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   // Real Email & Password Auth Handler
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -153,8 +74,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setError('Please enter your email and password.');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (isRegisterMode && password !== confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
@@ -168,9 +97,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       } else {
         user = await signInWithEmail(email.trim(), password);
       }
-      authProcessedRef.current = true;
       setLoading(false);
-      onLoginSuccess(user);
     } catch (err: any) {
       console.error('[Auth Error]:', err);
       const code = err?.code || 'UNKNOWN_ERROR';
@@ -182,6 +109,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         setError('This email is already registered. Please switch to Login or sign in with your password.');
       } else if (code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
+      } else if (code === 'auth/weak-password') {
+        setError('Choose a stronger password with at least 6 characters.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please wait a few minutes and try again.');
+      } else if (err?.name === 'AuthTimeoutError' || code === 'AUTH_TIMEOUT') {
+        setError(msg);
+      } else if (!navigator.onLine || code === 'auth/network-request-failed') {
+        setError('Network error. Check your connection and try again.');
       } else {
         setError(msg.replace(/^Firebase:\s*/, ''));
       }
@@ -294,12 +229,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           )}
 
-          {/* Google Sign-In Section - Native Google Official Button */}
+          {/* Google Sign-In Section - Firebase-managed popup */}
           <div className="mb-5">
-            <div 
-              ref={gsiContainerRef} 
-              className="flex justify-center min-h-[44px] w-full [&>div]:!w-full [&_iframe]:!w-full overflow-hidden rounded-2xl shadow-xs" 
-            />
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading || googleLoading}
+              className="w-full rounded-2xl border-2 border-slate-200 bg-white py-3 text-sm font-black text-slate-700 shadow-[0_3px_0_#e2e8f0] transition-all hover:border-orange-300 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+            </button>
           </div>
 
           {/* Divider */}
@@ -342,10 +281,35 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-4 h-4" />
                 </div>
+
+                {isRegisterMode && (
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                      Confirm Password
+                    </label>
+                    <div className="relative rounded-2xl border-2 border-slate-200 bg-slate-50/70 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_3px_0_#e2e8f0] focus-within:border-orange-500 focus-within:bg-white transition-all">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter your password"
+                        required
+                        className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 bg-transparent focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                )}
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onInvalid={(e) => {
+                    e.preventDefault();
+                    setError('Please enter a valid email address.');
+                  }}
                   placeholder="customer@example.com"
                   required
                   className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 placeholder-slate-400 bg-transparent focus:outline-hidden"
@@ -411,7 +375,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 Already have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => { setIsRegisterMode(false); setError(null); }}
+                  onClick={() => { setIsRegisterMode(false); setConfirmPassword(''); setError(null); }}
                   className="text-orange-600 hover:text-orange-700 font-bold underline cursor-pointer"
                 >
                   Login here
@@ -422,7 +386,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 Don't have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => { setIsRegisterMode(true); setError(null); }}
+                  onClick={() => { setIsRegisterMode(true); setConfirmPassword(''); setError(null); }}
                   className="text-orange-600 hover:text-orange-700 font-bold underline cursor-pointer"
                 >
                   Create one for free

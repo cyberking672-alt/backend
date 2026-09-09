@@ -27,9 +27,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    if (typeof window !== 'undefined' && (window as any).__dismissLankaBuyLoader) {
-      (window as any).__dismissLankaBuyLoader();
-    }
     console.error('LankaBuy Uncaught React Error:', error, errorInfo);
     this.setState({ errorInfo });
   }

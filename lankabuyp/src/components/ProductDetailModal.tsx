@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, 
   Star, 
@@ -25,6 +25,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
   onBuyNow,
 }) => {
+  const [selectedImage, setSelectedImage] = useState(DEFAULT_PRODUCT_IMAGE);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState<'overview' | 'specs'>('overview');
+
+  useEffect(() => {
+    if (!product) return;
+    const firstImage = product.galleryImages?.[0] || product.imageUrl || DEFAULT_PRODUCT_IMAGE;
+    setSelectedImage(firstImage);
+    setQuantity(1);
+    setActiveTab('overview');
+  }, [product]);
+
   if (!product) return null;
 
   const rawGallery = product.galleryImages && product.galleryImages.length > 0
@@ -35,10 +47,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const gallery = Array.from(
     new Map(rawGallery.map(url => [url.split('?')[0].toLowerCase(), url])).values()
   );
-
-  const [selectedImage, setSelectedImage] = useState(product.imageUrl || gallery[0] || DEFAULT_PRODUCT_IMAGE);
-  const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'overview' | 'specs'>('overview');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-fade-in">

@@ -13,6 +13,7 @@
  */
 
 import { GlobalProduct, GlobalProductVariant, GlobalTaxBreakdown } from '../src/types.ts';
+import type { CjPriority } from './cjTurbo.ts';
 
 export interface OverseasHub {
   name: string;
@@ -38,6 +39,7 @@ export interface QueryOptions {
   limit?: number;
   sort?: string;
   sessionSeed?: string;
+  priority?: CjPriority;
 }
 
 export interface PaginatedResult {
@@ -59,7 +61,7 @@ export interface PaginatedResult {
 
 export interface EngineDependencies {
   getCJToken: () => Promise<string | null>;
-  executeCjApiCall: <T>(fn: () => Promise<T>) => Promise<T>;
+  executeCjApiCall: <T>(fn: () => Promise<T>, priority?: CjPriority) => Promise<T>;
   getLiveUsdToLkrRate: () => Promise<number>;
   getProfitMarginPercent: () => number;
   computeLandedTax: (priceLkr: number, shippingFeeLkr: number) => GlobalTaxBreakdown;
@@ -167,7 +169,7 @@ export class CjProductEngine {
   /**
    * Query a single page from official CJ Dropshipping API
    */
-  private async queryCjSubPage(keyword: string, subPageNum: number, subPageSize: number = 100): Promise<any[]> {
+  private async queryCjSubPage(keyword: string, subPageNum: number, subPageSize: number = 100, priority: CjPriority = 'normal'): Promise<any[]> {
     const token = await this.deps.getCJToken();
     if (!token) {
       console.warn('[CJ Engine] No active access token available');
@@ -185,31 +187,37 @@ export class CjProductEngine {
     const endpointUrl = `https://developers.cjdropshipping.com/api2.0/v1/product/list?${params.toString()}`;
 
     try {
-      const data = await this.deps.executeCjApiCall(async () => {
-        let res = await fetch(endpointUrl, {
-          method: 'GET',
-          headers: {
-            'CJ-Access-Token': token
-          }
-        });
-        let resJson = await res.json();
-
-        // If rate limit (QPS) encountered, wait and retry once
-        const errMsg = String(resJson.message || resJson.msg || '');
-        if (errMsg.includes('Too Many Requests') || errMsg.includes('QPS limit') || resJson.code === 1600200) {
-          console.warn(`[CJ Engine Rate Limit] SubPage ${subPageNum} hit QPS limit. Waiting 1.6s before retry...`);
-          await new Promise((r) => setTimeout(r, 1600));
-          res = await fetch(endpointUrl, {
+      const data = await this.deps.executeCjApiCall(async () => {        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 9000);
+        try {
+          let res = await fetch(endpointUrl, {
             method: 'GET',
+            signal: ctrl.signal,
             headers: {
-              'CJ-Access-Token': token
+              'CJ-Access-Token': token,
             }
           });
-          resJson = await res.json();
-        }
+          let resJson = await res.json();
 
-        return resJson;
-      });
+          // If rate limit (QPS) encountered, wait and retry once (Turbo: 1.05s gap)
+          const errMsg = String(resJson.message || resJson.msg || '');
+          if (errMsg.includes('Too Many Requests') || errMsg.includes('QPS limit') || resJson.code === 1600200) {
+            console.warn(`[CJ Engine Rate Limit] SubPage ${subPageNum} hit QPS limit. Waiting 1.1s before retry...`);
+            await new Promise((r) => setTimeout(r, 1100));
+            res = await fetch(endpointUrl, {
+              method: 'GET',
+              headers: {
+                'CJ-Access-Token': token,
+              }
+            });
+            resJson = await res.json();
+          }
+
+          return resJson;
+        } finally {
+          clearTimeout(timer);
+        }
+      }, priority);
 
       if (data.result === true || data.code === 200) {
         const list = data.data?.list;
@@ -326,7 +334,7 @@ export class CjProductEngine {
   /**
    * Proactively expands the product pool for a given key by fetching more subpages from CJ API
    */
-  public async expandPool(poolKey: string, keyword: string, targetCountry: string, targetCount: number): Promise<GlobalProduct[]> {
+  public async expandPool(poolKey: string, keyword: string, targetCountry: string, targetCount: number, priority: CjPriority = 'normal'): Promise<GlobalProduct[]> {
     const currentList = this.productPool.get(poolKey) || [];
     if (currentList.length >= targetCount) {
       return currentList;
@@ -345,15 +353,22 @@ export class CjProductEngine {
 
         const newItems: GlobalProduct[] = [];
 
-        for (let i = 0; i < pagesToFetch; i++) {
-          const subPageNum = currentCursor + i;
-          let rawList = await this.queryCjSubPage(keyword, subPageNum, 100);
+        // Turbo: fire all 3 subpages in PARALLEL (they pipeline through the
+        // 1-QPS lane instead of sequential await + sequential throttle wait).
+        // Same CJ pages, same results — only scheduling is faster.
+        const subPageNums = Array.from({ length: pagesToFetch }, (_, i) => currentCursor + i);
+        const rawLists = await Promise.all(
+          subPageNums.map((n) => this.queryCjSubPage(keyword, n, 100, priority))
+        );
+
+        for (let i = 0; i < rawLists.length; i++) {
+          let rawList = rawLists[i] || [];
 
           if (!rawList || rawList.length === 0) {
             // If keyword had no items and has multiple words, try fallback
             if (keyword && keyword.includes(' ')) {
               const firstWord = keyword.split(/\s+/)[0];
-              const fallbackList = await this.queryCjSubPage(firstWord, 1, 100);
+              const fallbackList = await this.queryCjSubPage(firstWord, 1, 100, priority);
               rawList = fallbackList;
             }
           }
@@ -427,11 +442,17 @@ export class CjProductEngine {
     const limit = Math.min(100, Math.max(1, options.limit || 20));
     const sort = options.sort || 'price-low';
     const sessionSeed = options.sessionSeed;
+    const lane: CjPriority = options.priority || 'normal';
 
     const poolKey = `${country.toLowerCase()}:${search.toLowerCase()}:${category.toLowerCase()}`;
     const requiredCount = (page + 1) * limit; // Pre-buffer next page to guarantee zero lag
 
     // 1. Check if pool needs expansion
+    // Turbo: if pool already holds enough for the CURRENT page, serve it
+    // instantly (<30ms) and expand for the NEXT page in background.
+    // Only block (await) when pool is empty — first sighting of a keyword.
+    // Same products, same sort — only the wait is removed.
+    const needForCurrentPage = page * limit;
     let pool: GlobalProduct[] = [];
     if (country === 'all') {
       const allMap = new Map<string, GlobalProduct>();
@@ -446,8 +467,8 @@ export class CjProductEngine {
       pool = this.productPool.get(poolKey) || [];
     }
 
-    if (pool.length < requiredCount || pool.length < 20) {
-      await this.expandPool(poolKey, search, country, Math.max(requiredCount, 60));
+    if (pool.length === 0) {
+      await this.expandPool(poolKey, search, country, Math.max(requiredCount, 60), lane);
       if (country === 'all') {
         const allMap = new Map<string, GlobalProduct>();
         for (const [key, items] of this.productPool.entries()) {
@@ -459,6 +480,24 @@ export class CjProductEngine {
         pool = Array.from(allMap.values());
       } else {
         pool = this.productPool.get(poolKey) || [];
+      }
+    } else if (pool.length < requiredCount) {
+      // Background top-up for next-page scroll: don't block current response.
+      void this.expandPool(poolKey, search, country, Math.max(requiredCount, 60), 'background').catch(() => {});
+      if (country === 'all') {
+        // Re-read in case background already finished synchronously
+        const allMap = new Map<string, GlobalProduct>();
+        for (const [key, items] of this.productPool.entries()) {
+          if (search && !key.includes(search.toLowerCase())) continue;
+          for (const it of items) {
+            allMap.set(it.id, it);
+          }
+        }
+        const fresh = Array.from(allMap.values());
+        if (fresh.length > pool.length) pool = fresh;
+      } else {
+        const fresh = this.productPool.get(poolKey) || [];
+        if (fresh.length > pool.length) pool = fresh;
       }
     }
 
@@ -473,9 +512,10 @@ export class CjProductEngine {
       return true;
     });
 
-    // If filtered count is still under target for country, perform targeted expansion
-    if (filtered.length < requiredCount) {
-      await this.expandPool(poolKey, search, country, requiredCount + 40);
+    // If filtered count is still under target for CURRENT page, block-expand;
+    // if only the next-page buffer is short, top-up in background instead.
+    if (filtered.length < needForCurrentPage) {
+      await this.expandPool(poolKey, search, country, requiredCount + 40, lane);
       pool = this.productPool.get(poolKey) || [];
       filtered = pool.filter((p) => {
         if (country !== 'all' && p.country.toLowerCase() !== country.toLowerCase()) {
@@ -486,6 +526,8 @@ export class CjProductEngine {
         }
         return true;
       });
+    } else if (filtered.length < requiredCount) {
+      void this.expandPool(poolKey, search, country, requiredCount + 40, 'background').catch(() => {});
     }
 
     // 3. Apply sorting algorithm
@@ -541,9 +583,9 @@ export class CjProductEngine {
       const targetHubs = ['all', 'China', 'Japan', 'South Korea', 'Singapore', 'United Arab Emirates'];
       for (const hub of targetHubs) {
         const poolKey = `${hub.toLowerCase()}::all`;
-        await this.expandPool(poolKey, '', hub, 60);
-        // Small pause between hubs to respect CJ QPS rate limit
-        await new Promise((r) => setTimeout(r, 1600));
+        await this.expandPool(poolKey, '', hub, 60, 'background');
+        // Turbo: 1.1s gap matches the 1-QPS lane (was 1.6s — same respect, less waste)
+        await new Promise((r) => setTimeout(r, 1100));
       }
       console.log('[CJ Engine Pre-warm COMPLETE] All overseas hubs successfully pre-warmed in memory!');
     } catch (err) {

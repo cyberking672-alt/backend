@@ -27,8 +27,6 @@ export const SupplierHubModal: React.FC<SupplierHubModalProps> = ({
   onClose,
   orders,
 }) => {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'logs' | 'analytics' | 'tester' | 'security'>('logs');
   const [logs, setLogs] = useState<SupplierApiLog[]>([]);
   const [selectedLog, setSelectedLog] = useState<SupplierApiLog | null>(null);
@@ -37,6 +35,8 @@ export const SupplierHubModal: React.FC<SupplierHubModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [pingResult, setPingResult] = useState<any>(null);
   const [pinging, setPinging] = useState(false);
+
+  if (!isOpen) return null;
 
   const fetchLogsAndStats = async () => {
     setLoading(true);

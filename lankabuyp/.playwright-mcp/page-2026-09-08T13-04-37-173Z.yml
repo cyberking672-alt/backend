@@ -1,0 +1,80 @@
+- generic [ref=f310e3]:
+  - banner [ref=f310e4]:
+    - generic [ref=f310e5]:
+      - generic [ref=f310e14] [cursor=pointer]:
+        - generic [ref=f310e15]:
+          - generic [ref=f310e16]: Lanka
+          - generic [ref=f310e17]: Buy
+        - generic [ref=f310e19]: Direct Marketplace • Sri Lanka
+      - generic [ref=f310e21]:
+        - button "All Categories" [ref=f310e23] [cursor=pointer]
+        - textbox "Search 1,000+ products (e.g. Drone, Earbuds, Watch)..." [ref=f310e28]
+        - button [ref=f310e29] [cursor=pointer]
+      - generic [ref=f310e33]:
+        - button "Orders" [ref=f310e34] [cursor=pointer]
+        - button "Sign In" [ref=f310e41] [cursor=pointer]
+        - button "Cart" [ref=f310e46] [cursor=pointer]
+  - generic [ref=f310e53]:
+    - generic [ref=f310e54]:
+      - button "Back to Store" [ref=f310e55] [cursor=pointer]
+      - button "Refresh" [ref=f310e60] [cursor=pointer]
+    - generic [ref=f310e67]:
+      - generic [ref=f310e73]:
+        - heading "My Orders & Tracking" [level=1] [ref=f310e74]
+        - paragraph [ref=f310e75]: Please sign in to view your ordered items, track current parcel locations, and check the 7-day return guarantee.
+      - button "Sign In to View Orders" [ref=f310e76] [cursor=pointer]
+      - button "Explore Products" [ref=f310e81] [cursor=pointer]
+  - contentinfo [ref=f310e82]:
+    - generic [ref=f310e83]:
+      - generic [ref=f310e84]:
+        - generic [ref=f310e94] [cursor=pointer]:
+          - generic [ref=f310e95]: Lanka
+          - generic [ref=f310e96]: Buy
+        - paragraph [ref=f310e98]: Sri Lanka's trusted and fastest online shopping destination. Providing genuine high-quality products, verified seller inventories, and reliable express delivery across all 25 districts.
+        - generic [ref=f310e99]:
+          - generic [ref=f310e100]: 100% Genuine Products & Buyer Protection
+          - generic [ref=f310e105]: Express Doorstep Delivery Across Sri Lanka
+      - generic [ref=f310e112]:
+        - heading "Customer Service" [level=4] [ref=f310e113]
+        - list [ref=f310e115]:
+          - listitem [ref=f310e116]:
+            - button "Track Your Order" [ref=f310e117] [cursor=pointer]
+          - listitem [ref=f310e124]:
+            - button "Help & FAQs" [ref=f310e125] [cursor=pointer]
+          - listitem [ref=f310e126]:
+            - button "Return & Refund Policy" [ref=f310e127] [cursor=pointer]
+          - listitem [ref=f310e128]:
+            - button "Terms & Conditions" [ref=f310e129] [cursor=pointer]
+          - listitem [ref=f310e130]:
+            - button "Privacy Policy" [ref=f310e131] [cursor=pointer]
+      - generic [ref=f310e132]:
+        - heading "Delivery & Guarantees" [level=4] [ref=f310e133]
+        - generic [ref=f310e135]:
+          - generic [ref=f310e136]:
+            - generic [ref=f310e137]:
+              - generic [ref=f310e138]: "Colombo & Suburbs:"
+              - generic [ref=f310e139]: 1 - 2 Business Days
+            - generic [ref=f310e140]:
+              - generic [ref=f310e141]: "Islandwide Outstation:"
+              - generic [ref=f310e142]: 2 - 4 Business Days
+            - generic [ref=f310e143]:
+              - generic [ref=f310e144]: "Return Window:"
+              - generic [ref=f310e145]: 7 Days Easy Return
+          - paragraph [ref=f310e146]: Direct doorstep dispatch via licensed courier networks with tracking updates across Sri Lanka.
+      - generic [ref=f310e147]:
+        - heading "Payment & Security" [level=4] [ref=f310e148]
+        - generic [ref=f310e150]:
+          - generic [ref=f310e151]:
+            - generic [ref=f310e152]: "Accepted Payment Methods:"
+            - generic [ref=f310e153]:
+              - generic [ref=f310e154]: KOKO (Pay in 3)
+              - generic [ref=f310e155]: LankaQR
+              - generic [ref=f310e156]: VISA / Master
+              - generic [ref=f310e157]: 💵 Cash on Delivery
+          - generic [ref=f310e158]:
+            - generic [ref=f310e159]: "Security Encryption:"
+            - generic [ref=f310e160]: 256-Bit SSL Protected
+          - generic [ref=f310e165]:
+            - generic [ref=f310e166]: "Store Currency:"
+            - generic [ref=f310e167]: Sri Lankan Rupee (LKR / Rs.)
+    - paragraph [ref=f310e169]: © 2026 LankaBuy. All rights reserved. Sri Lanka's Trusted E-Commerce Marketplace.

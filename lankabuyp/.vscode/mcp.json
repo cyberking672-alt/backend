@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {
+        "PLAYWRIGHT_MCP_CONSOLE_LEVEL": "error"
+      }
+    }
+  }
+}

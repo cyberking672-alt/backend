@@ -18,80 +18,42 @@ export function sanitizeString(input: string): string {
  * Zod Schema for Customer Delivery Details (Sri Lankan Address)
  */
 export const customerShippingSchema = z.object({
-  fullName: z
-    .string()
-    .default('Valued Customer')
-    .transform(sanitizeString),
-  phone: z
-    .string()
-    .default('0771234567')
-    .transform(sanitizeString),
-  email: z
-    .string()
-    .default('customer@lankabuy.lk')
-    .transform((val) => sanitizeString(val.toLowerCase())),
-  street: z
-    .string()
-    .default('Main Street')
-    .transform(sanitizeString),
-  city: z
-    .string()
-    .default('Colombo')
-    .transform(sanitizeString),
-  district: z
-    .string()
-    .default('Colombo')
-    .transform((val) => sanitizeString(val)),
-  province: z
-    .string()
-    .default('Western')
-    .transform((val) => sanitizeString(val)),
-  postalCode: z
-    .string()
-    .default('00100')
-    .transform((val) => sanitizeString(val)),
-  country: z
-    .string()
-    .default('Sri Lanka')
-    .transform(sanitizeString),
+  fullName: z.string().trim().min(2).max(100).transform(sanitizeString),
+  phone: z.string().trim().min(9).max(15).transform(sanitizeString),
+  email: z.string().trim().email().max(254).transform((val) => sanitizeString(val.toLowerCase())),
+  street: z.string().trim().min(3).max(200).transform(sanitizeString),
+  city: z.string().trim().min(2).max(80).transform(sanitizeString),
+  district: z.string().trim().min(2).max(80).transform(sanitizeString),
+  province: z.string().trim().min(2).max(80).transform(sanitizeString),
+  postalCode: z.string().trim().min(3).max(20).transform(sanitizeString),
+  country: z.literal('Sri Lanka'),
+  // Optional additive fields for fulfillment (WhatsApp + calling code).
+  whatsapp: z.string().trim().max(15).optional().transform((val) => (val ? sanitizeString(val) : undefined)),
+  countryCallingCode: z.string().trim().max(8).optional().transform((val) => (val ? sanitizeString(val) : undefined)),
 });
 
 /**
  * Zod Schema for Individual Cart Line Item
  */
 export const orderItemSchema = z.object({
-  productId: z.any().transform((val) => sanitizeString(String(val || 'prod-item'))),
-  title: z.any().transform((val) => sanitizeString(String(val || 'LankaBuy Product'))),
-  sku: z.any().transform((val) => sanitizeString(String(val || 'SKU-DIRECT'))),
-  unitPrice: z.any().transform((val) => {
-    const num = Number(val);
-    return isNaN(num) || num <= 0 ? 3500 : num;
-  }),
-  wholesaleCost: z.any().transform((val) => {
-    const num = Number(val);
-    return isNaN(num) || num <= 0 ? 2450 : num;
-  }),
-  quantity: z.any().transform((val) => {
-    const num = Math.floor(Number(val));
-    return isNaN(num) || num < 1 ? 1 : num;
-  }),
-  imageUrl: z.any().transform((val) => (val ? sanitizeString(String(val)) : '')),
+  productId: z.string().trim().min(1).max(200).transform(sanitizeString),
+  quantity: z.coerce.number().int().min(1).max(99),
+  selectedColor: z.string().max(100).optional().transform((val) => val ? sanitizeString(val) : ''),
+  selectedSize: z.string().max(100).optional().transform((val) => val ? sanitizeString(val) : ''),
 });
 
 /**
  * Zod Schema for Entire Order Submission Request
  */
 export const createOrderRequestSchema = z.object({
-  customer: customerShippingSchema.optional().default({}),
+  customer: customerShippingSchema,
   items: z.array(orderItemSchema).min(1, 'At least 1 item is required in cart'),
-  shippingFee: z.any().transform((val) => Math.max(0, Number(val) || 0)),
-  discount: z.any().transform((val) => Math.max(0, Number(val) || 0)),
-  voucherCode: z.any().transform((val) => (val ? sanitizeString(String(val).toUpperCase()) : '')),
-  paymentMethod: z.any().transform((val) => {
+  voucherCode: z.string().max(50).optional().transform((val) => (val ? sanitizeString(val.toUpperCase()) : '')),
+  paymentMethod: z.string().transform((val) => {
     const m = String(val || 'COD').toUpperCase();
     if (m === 'CARD' || m === 'CREEM_MOR') return 'CREDIT_CARD';
     return m;
-  }),
+  }).pipe(z.enum(['COD', 'CREDIT_CARD', 'LANKA_QR', 'KOKO_MINTPAY'])),
 });
 
 export type ValidatedOrderInput = z.infer<typeof createOrderRequestSchema>;
@@ -101,12 +63,14 @@ export type ValidatedOrderInput = z.infer<typeof createOrderRequestSchema>;
  */
 export const checkoutRequestSchema = z.object({
   cart: z.array(z.any()).optional(),
-  items: z.array(z.any()).optional(),
-  customer: customerShippingSchema.optional().default({}),
+  items: z.array(orderItemSchema).optional(),
+  customer: customerShippingSchema,
   customerEmail: z.string().optional().transform((v) => (v ? sanitizeString(v.toLowerCase()) : '')),
   customerName: z.string().optional().transform((v) => (v ? sanitizeString(v) : '')),
   customerPhone: z.string().optional().transform((v) => (v ? sanitizeString(v) : '')),
-  paymentMethod: z.string().optional().default('CREDIT_CARD').transform((v) => sanitizeString(v.toUpperCase())),
+  paymentMethod: z.string().optional().default('CREDIT_CARD')
+    .transform((v) => sanitizeString(v.toUpperCase()))
+    .pipe(z.enum(['COD', 'CREDIT_CARD', 'LANKA_QR', 'KOKO_MINTPAY', 'CARD', 'CREEM_MOR'])),
   successUrl: z.string().optional().transform((v) => (v ? sanitizeString(v) : '')),
   discount: z.number().optional().default(0),
   voucherCode: z.string().optional().default(''),
@@ -136,5 +100,3 @@ export const adminActionSchema = z.object({
   action: z.string().min(1).transform(sanitizeString),
   payload: z.record(z.string(), z.any()).optional().default({}),
 });
-
-

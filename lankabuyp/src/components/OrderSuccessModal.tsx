@@ -21,9 +21,9 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
   onClose,
   onOpenTrack,
 }) => {
-  if (!order) return null;
-
   const [copied, setCopied] = React.useState(false);
+
+  if (!order) return null;
 
   const handleCopyTracking = () => {
     const trackNum = order.trackingNumber || order.supplierResponse?.trackingNumber;

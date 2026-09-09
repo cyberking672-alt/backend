@@ -36,6 +36,35 @@ export function getCreemConfig() {
   return { apiKey, baseUrl, isTest, isConfigured };
 }
 
+export function getPublicAppUrl(): URL {
+  const configuredUrl = (process.env.PUBLIC_APP_URL || process.env.APP_URL || '').trim();
+  const value = configuredUrl || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('PUBLIC_APP_URL or APP_URL must be an absolute URL, for example https://shop.example.com.');
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) {
+    throw new Error('PUBLIC_APP_URL or APP_URL must use http:// or https:// with a valid hostname.');
+  }
+  if (process.env.NODE_ENV === 'production' && url.protocol !== 'https:') {
+    throw new Error('PUBLIC_APP_URL or APP_URL must use HTTPS in production.');
+  }
+  return url;
+}
+
+export function getCreemWebhookUrl(): URL {
+  const configuredUrl = (process.env.CREEM_WEBHOOK_URL || '').trim();
+  const baseUrl = getPublicAppUrl();
+  const webhookUrl = new URL(configuredUrl || '/api/webhooks/creem', baseUrl);
+  if (process.env.NODE_ENV === 'production' && webhookUrl.protocol !== 'https:') {
+    throw new Error('CREEM_WEBHOOK_URL must use HTTPS in production.');
+  }
+  return webhookUrl;
+}
+
 /**
  * 1. AUTO-SYNC PRODUCT TO CREEM (POST /v1/products)
  * Synchronizes an individual product with Creem.io to obtain prod_xxxx
@@ -271,7 +300,7 @@ export async function createCreemCheckoutSession(params: {
           ...(customer.id ? { id: customer.id } : {}),
         }
       : undefined,
-    success_url: successUrl || `${process.env.APP_URL || ''}/order/${orderNumber}`,
+    success_url: successUrl || new URL(`/order/${encodeURIComponent(orderNumber)}`, getPublicAppUrl()).toString(),
     metadata: {
       orderId,
       orderNumber,
@@ -436,4 +465,3 @@ export async function fetchCreemCheckoutSession(sessionId: string): Promise<{
     };
   }
 }
-

@@ -1,0 +1,399 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - generic [ref=f3e14] [cursor=pointer]:
+        - generic [ref=f3e15]:
+          - generic [ref=f3e16]: Lanka
+          - generic [ref=f3e17]: Buy
+        - generic [ref=f3e19]: Direct Marketplace • Sri Lanka
+      - generic [ref=f3e21]:
+        - button "All Categories" [ref=f3e23] [cursor=pointer]
+        - textbox "Search 1,000+ products (e.g. Drone, Earbuds, Watch)..." [ref=f3e28]
+        - button [ref=f3e29] [cursor=pointer]
+      - generic [ref=f3e33]:
+        - button "Orders" [ref=f3e34] [cursor=pointer]
+        - button "M MCP Test User" [ref=f3e42] [cursor=pointer]:
+          - generic [ref=f3e43]: M
+          - generic [ref=f3e44]: MCP Test User
+        - button "Cart" [ref=f3e47] [cursor=pointer]
+  - generic [ref=f3e54]:
+    - generic [ref=f3e55]:
+      - heading "Browse Popular Categories" [level=3] [ref=f3e56]
+      - generic [ref=f3e59] [cursor=pointer]: Show All Items
+    - generic [ref=f3e60]:
+      - button "All Categories" [ref=f3e61] [cursor=pointer]
+      - button "Electronics" [ref=f3e67] [cursor=pointer]
+      - button "Mobile Accessories" [ref=f3e72] [cursor=pointer]
+      - button "Smart Gadgets" [ref=f3e77] [cursor=pointer]
+      - button "Fashion" [ref=f3e82] [cursor=pointer]
+      - button "Beauty" [ref=f3e87] [cursor=pointer]
+      - button "Home & Living" [ref=f3e92] [cursor=pointer]
+      - button "Kitchen" [ref=f3e98] [cursor=pointer]
+      - button "Fitness" [ref=f3e104] [cursor=pointer]
+      - button "Watches" [ref=f3e109] [cursor=pointer]
+      - button "Accessories" [ref=f3e117] [cursor=pointer]
+  - main [ref=f3e126]:
+    - generic [ref=f3e127]:
+      - generic [ref=f3e128]:
+        - generic [ref=f3e129]:
+          - heading "All Verified Marketplace Products" [level=2] [ref=f3e133]
+          - generic [ref=f3e134]: 36 items
+        - paragraph [ref=f3e135]: Direct verified merchant pricing in LKR (Rs.) with automated islandwide delivery dispatch.
+      - generic [ref=f3e136]:
+        - button "Deals" [ref=f3e137] [cursor=pointer]
+        - button "Free Delivery" [ref=f3e141] [cursor=pointer]
+        - combobox [ref=f3e151] [cursor=pointer]:
+          - option "💵 COD (Cash on Delivery)"
+          - option "💳 Card Only"
+          - option "🔄 Card or COD" [selected]
+        - combobox [ref=f3e156] [cursor=pointer]:
+          - option "Popularity / Trending" [selected]
+          - 'option "Price: Low to High"'
+          - 'option "Price: High to Low"'
+          - option "Top Rating"
+          - option "Biggest % Discount"
+    - generic [ref=f3e157]:
+      - generic [ref=f3e158]:
+        - generic [ref=f3e159] [cursor=pointer]:
+          - generic [ref=f3e160]:
+            - img "Adhesive Mop Hook Bathroom Kitchen Wall Mount" [ref=f3e161]
+            - generic [ref=f3e162]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e164]: "-24%"
+          - generic [ref=f3e165]:
+            - generic [ref=f3e166]:
+              - generic [ref=f3e167]:
+                - generic [ref=f3e168]: Home Office Storage
+                - generic [ref=f3e169]: •
+                - generic [ref=f3e170]: Verified
+              - heading "Adhesive Mop Hook Bathroom Kitchen Wall Mount" [level=4] [ref=f3e174]
+              - generic [ref=f3e175]:
+                - generic [ref=f3e176]: "4.8999999999999995"
+                - generic [ref=f3e180]: "|"
+                - generic [ref=f3e181]: 941 sold
+              - generic [ref=f3e182]:
+                - generic [ref=f3e183]:
+                  - generic [ref=f3e184]: Rs. 41
+                  - generic [ref=f3e185]: Rs. 54
+                - generic [ref=f3e186]: 💳 Card / Online Only
+            - generic [ref=f3e188]:
+              - button "Add" [ref=f3e189]
+              - button "Buy" [ref=f3e194]
+        - generic [ref=f3e198] [cursor=pointer]:
+          - generic [ref=f3e199]:
+            - img "Kraft Paper Color Single-layer Honeycomb" [ref=f3e200]
+            - generic [ref=f3e201]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e203]: "-24%"
+          - generic [ref=f3e204]:
+            - generic [ref=f3e205]:
+              - generic [ref=f3e206]:
+                - generic [ref=f3e207]: General Merchandise
+                - generic [ref=f3e208]: •
+                - generic [ref=f3e209]: Verified
+              - heading "Kraft Paper Color Single-layer Honeycomb" [level=4] [ref=f3e213]
+              - generic [ref=f3e214]:
+                - generic [ref=f3e215]: "4.8999999999999995"
+                - generic [ref=f3e219]: "|"
+                - generic [ref=f3e220]: 757 sold
+              - generic [ref=f3e221]:
+                - generic [ref=f3e222]:
+                  - generic [ref=f3e223]: Rs. 54
+                  - generic [ref=f3e224]: Rs. 71
+                - generic [ref=f3e225]: 💳 Card / Online Only
+            - generic [ref=f3e227]:
+              - button "Add" [ref=f3e228]
+              - button "Buy" [ref=f3e233]
+        - generic [ref=f3e237] [cursor=pointer]:
+          - generic [ref=f3e238]:
+            - img "Womens Mid-calf Socks Solid-color Athletic Socks" [ref=f3e239]
+            - generic [ref=f3e240]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e242]: "-24%"
+          - generic [ref=f3e243]:
+            - generic [ref=f3e244]:
+              - generic [ref=f3e245]:
+                - generic [ref=f3e246]: Woman Socks
+                - generic [ref=f3e247]: •
+                - generic [ref=f3e248]: Verified
+              - heading "Womens Mid-calf Socks Solid-color Athletic Socks" [level=4] [ref=f3e252]
+              - generic [ref=f3e253]:
+                - generic [ref=f3e254]: "4.6"
+                - generic [ref=f3e258]: "|"
+                - generic [ref=f3e259]: 828 sold
+              - generic [ref=f3e260]:
+                - generic [ref=f3e261]:
+                  - generic [ref=f3e262]: Rs. 95
+                  - generic [ref=f3e263]: Rs. 125
+                - generic [ref=f3e264]: 💳 Card / Online Only
+            - generic [ref=f3e266]:
+              - button "Add" [ref=f3e267]
+              - button "Buy" [ref=f3e272]
+        - generic [ref=f3e276] [cursor=pointer]:
+          - generic [ref=f3e277]:
+            - img "Womens Thin, Breathable White Ankle Socks" [ref=f3e278]
+            - generic [ref=f3e279]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e281]: "-24%"
+          - generic [ref=f3e282]:
+            - generic [ref=f3e283]:
+              - generic [ref=f3e284]:
+                - generic [ref=f3e285]: Woman Socks
+                - generic [ref=f3e286]: •
+                - generic [ref=f3e287]: Verified
+              - heading "Womens Thin, Breathable White Ankle Socks" [level=4] [ref=f3e291]
+              - generic [ref=f3e292]:
+                - generic [ref=f3e293]: "4.6"
+                - generic [ref=f3e297]: "|"
+                - generic [ref=f3e298]: 920 sold
+              - generic [ref=f3e299]:
+                - generic [ref=f3e300]:
+                  - generic [ref=f3e301]: Rs. 135
+                  - generic [ref=f3e302]: Rs. 178
+                - generic [ref=f3e303]: 💳 Card / Online Only
+            - generic [ref=f3e305]:
+              - button "Add" [ref=f3e306]
+              - button "Buy" [ref=f3e311]
+        - generic [ref=f3e315] [cursor=pointer]:
+          - generic [ref=f3e316]:
+            - img "Thin Socks, Womens Breathable Ankle Socks" [ref=f3e317]
+            - generic [ref=f3e318]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e320]: "-24%"
+          - generic [ref=f3e321]:
+            - generic [ref=f3e322]:
+              - generic [ref=f3e323]:
+                - generic [ref=f3e324]: Woman Socks
+                - generic [ref=f3e325]: •
+                - generic [ref=f3e326]: Verified
+              - heading "Thin Socks, Womens Breathable Ankle Socks" [level=4] [ref=f3e330]
+              - generic [ref=f3e331]:
+                - generic [ref=f3e332]: "4.8"
+                - generic [ref=f3e336]: "|"
+                - generic [ref=f3e337]: 598 sold
+              - generic [ref=f3e338]:
+                - generic [ref=f3e339]:
+                  - generic [ref=f3e340]: Rs. 144
+                  - generic [ref=f3e341]: Rs. 190
+                - generic [ref=f3e342]: 💳 Card / Online Only
+            - generic [ref=f3e344]:
+              - button "Add" [ref=f3e345]
+              - button "Buy" [ref=f3e350]
+        - generic [ref=f3e354] [cursor=pointer]:
+          - generic [ref=f3e355]:
+            - img "Oil-soluble Aromatherapy Essential Oil Diffuser" [ref=f3e356]
+            - generic [ref=f3e357]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e359]: "-24%"
+          - generic [ref=f3e360]:
+            - generic [ref=f3e361]:
+              - generic [ref=f3e362]:
+                - generic [ref=f3e363]: Essential Oil
+                - generic [ref=f3e364]: •
+                - generic [ref=f3e365]: Verified
+              - heading "Oil-soluble Aromatherapy Essential Oil Diffuser" [level=4] [ref=f3e369]
+              - generic [ref=f3e370]:
+                - generic [ref=f3e371]: "4.8"
+                - generic [ref=f3e375]: "|"
+                - generic [ref=f3e376]: 528 sold
+              - generic [ref=f3e377]:
+                - generic [ref=f3e378]:
+                  - generic [ref=f3e379]: Rs. 156
+                  - generic [ref=f3e380]: Rs. 206
+                - generic [ref=f3e381]: 💳 Card / Online Only
+            - generic [ref=f3e383]:
+              - button "Add" [ref=f3e384]
+              - button "Buy" [ref=f3e389]
+        - generic [ref=f3e393] [cursor=pointer]:
+          - generic [ref=f3e394]:
+            - img "Cartoon Bear Socks Womens Ankle Socks" [ref=f3e395]
+            - generic [ref=f3e396]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e398]: "-24%"
+          - generic [ref=f3e399]:
+            - generic [ref=f3e400]:
+              - generic [ref=f3e401]:
+                - generic [ref=f3e402]: Woman Socks
+                - generic [ref=f3e403]: •
+                - generic [ref=f3e404]: Verified
+              - heading "Cartoon Bear Socks Womens Ankle Socks" [level=4] [ref=f3e408]
+              - generic [ref=f3e409]:
+                - generic [ref=f3e410]: "4.8"
+                - generic [ref=f3e414]: "|"
+                - generic [ref=f3e415]: 896 sold
+              - generic [ref=f3e416]:
+                - generic [ref=f3e417]:
+                  - generic [ref=f3e418]: Rs. 173
+                  - generic [ref=f3e419]: Rs. 228
+                - generic [ref=f3e420]: 💳 Card / Online Only
+            - generic [ref=f3e422]:
+              - button "Add" [ref=f3e423]
+              - button "Buy" [ref=f3e428]
+        - generic [ref=f3e432] [cursor=pointer]:
+          - generic [ref=f3e433]:
+            - img "Easy To Clean And Durable Fan Filter Cotton" [ref=f3e434]
+            - generic [ref=f3e435]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e437]: "-24%"
+          - generic [ref=f3e438]:
+            - generic [ref=f3e439]:
+              - generic [ref=f3e440]:
+                - generic [ref=f3e441]: Home Office Storage
+                - generic [ref=f3e442]: •
+                - generic [ref=f3e443]: Verified
+              - heading "Easy To Clean And Durable Fan Filter Cotton" [level=4] [ref=f3e447]
+              - generic [ref=f3e448]:
+                - generic [ref=f3e449]: "4.8"
+                - generic [ref=f3e453]: "|"
+                - generic [ref=f3e454]: 664 sold
+              - generic [ref=f3e455]:
+                - generic [ref=f3e456]:
+                  - generic [ref=f3e457]: Rs. 185
+                  - generic [ref=f3e458]: Rs. 244
+                - generic [ref=f3e459]: 💳 Card / Online Only
+            - generic [ref=f3e461]:
+              - button "Add" [ref=f3e462]
+              - button "Buy" [ref=f3e467]
+        - generic [ref=f3e471] [cursor=pointer]:
+          - generic [ref=f3e472]:
+            - img "Thin Low Cut Women's Shallow Mouth Invisible Short Socks" [ref=f3e473]
+            - generic [ref=f3e474]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e476]: "-24%"
+          - generic [ref=f3e477]:
+            - generic [ref=f3e478]:
+              - generic [ref=f3e479]:
+                - generic [ref=f3e480]: Woman Socks
+                - generic [ref=f3e481]: •
+                - generic [ref=f3e482]: Verified
+              - heading "Thin Low Cut Women's Shallow Mouth Invisible Short Socks" [level=4] [ref=f3e486]
+              - generic [ref=f3e487]:
+                - generic [ref=f3e488]: "4.699999999999999"
+                - generic [ref=f3e492]: "|"
+                - generic [ref=f3e493]: 781 sold
+              - generic [ref=f3e494]:
+                - generic [ref=f3e495]:
+                  - generic [ref=f3e496]: Rs. 185
+                  - generic [ref=f3e497]: Rs. 244
+                - generic [ref=f3e498]: 💳 Card / Online Only
+            - generic [ref=f3e500]:
+              - button "Add" [ref=f3e501]
+              - button "Buy" [ref=f3e506]
+        - generic [ref=f3e510] [cursor=pointer]:
+          - generic [ref=f3e511]:
+            - img "Children's Wooden Small Harmonica" [ref=f3e512]
+            - generic [ref=f3e513]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e515]: "-24%"
+          - generic [ref=f3e516]:
+            - generic [ref=f3e517]:
+              - generic [ref=f3e518]:
+                - generic [ref=f3e519]: Home Office Storage
+                - generic [ref=f3e520]: •
+                - generic [ref=f3e521]: Verified
+              - heading "Children's Wooden Small Harmonica" [level=4] [ref=f3e525]
+              - generic [ref=f3e526]:
+                - generic [ref=f3e527]: "4.8"
+                - generic [ref=f3e531]: "|"
+                - generic [ref=f3e532]: 226 sold
+              - generic [ref=f3e533]:
+                - generic [ref=f3e534]:
+                  - generic [ref=f3e535]: Rs. 198
+                  - generic [ref=f3e536]: Rs. 261
+                - generic [ref=f3e537]: 💳 Card / Online Only
+            - generic [ref=f3e539]:
+              - button "Add" [ref=f3e540]
+              - button "Buy" [ref=f3e545]
+        - generic [ref=f3e549] [cursor=pointer]:
+          - generic [ref=f3e550]:
+            - img "Creative Little Swan Elegant Earrings" [ref=f3e551]
+            - generic [ref=f3e552]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e554]: "-24%"
+          - generic [ref=f3e555]:
+            - generic [ref=f3e556]:
+              - generic [ref=f3e557]:
+                - generic [ref=f3e558]: Earrings
+                - generic [ref=f3e559]: •
+                - generic [ref=f3e560]: Verified
+              - heading "Creative Little Swan Elegant Earrings" [level=4] [ref=f3e564]
+              - generic [ref=f3e565]:
+                - generic [ref=f3e566]: "4.8"
+                - generic [ref=f3e570]: "|"
+                - generic [ref=f3e571]: 826 sold
+              - generic [ref=f3e572]:
+                - generic [ref=f3e573]:
+                  - generic [ref=f3e574]: Rs. 198
+                  - generic [ref=f3e575]: Rs. 261
+                - generic [ref=f3e576]: 💳 Card / Online Only
+            - generic [ref=f3e578]:
+              - button "Add" [ref=f3e579]
+              - button "Buy" [ref=f3e584]
+        - generic [ref=f3e588] [cursor=pointer]:
+          - generic [ref=f3e589]:
+            - img "Thickened High density Color coated Non stick Pan Double sided Kitchen Dish washing Scouring Pad And Sponge Brush" [ref=f3e590]
+            - generic [ref=f3e591]: ⚡ GLOBAL CJ DEAL
+            - generic [ref=f3e593]: "-24%"
+          - generic [ref=f3e594]:
+            - generic [ref=f3e595]:
+              - generic [ref=f3e596]:
+                - generic [ref=f3e597]: Kitchen Storage
+                - generic [ref=f3e598]: •
+                - generic [ref=f3e599]: Verified
+              - heading "Thickened High density Color coated Non stick Pan Double sided Kitchen Dish washing Scouring Pad And Sponge Brush" [level=4] [ref=f3e603]
+              - generic [ref=f3e604]:
+                - generic [ref=f3e605]: "4.8"
+                - generic [ref=f3e609]: "|"
+                - generic [ref=f3e610]: 874 sold
+              - generic [ref=f3e611]:
+                - generic [ref=f3e612]:
+                  - generic [ref=f3e613]: Rs. 205
+                  - generic [ref=f3e614]: Rs. 271
+                - generic [ref=f3e615]: 💳 Card / Online Only
+            - generic [ref=f3e617]:
+              - button "Add" [ref=f3e618]
+              - button "Buy" [ref=f3e623]
+      - button "Load More Products (24 remaining)" [ref=f3e628] [cursor=pointer]
+  - contentinfo [ref=f3e629]:
+    - generic [ref=f3e630]:
+      - generic [ref=f3e631]:
+        - generic [ref=f3e641] [cursor=pointer]:
+          - generic [ref=f3e642]: Lanka
+          - generic [ref=f3e643]: Buy
+        - paragraph [ref=f3e645]: Sri Lanka's trusted and fastest online shopping destination. Providing genuine high-quality products, verified seller inventories, and reliable express delivery across all 25 districts.
+        - generic [ref=f3e646]:
+          - generic [ref=f3e647]: 100% Genuine Products & Buyer Protection
+          - generic [ref=f3e652]: Express Doorstep Delivery Across Sri Lanka
+      - generic [ref=f3e659]:
+        - heading "Customer Service" [level=4] [ref=f3e660]
+        - list [ref=f3e662]:
+          - listitem [ref=f3e663]:
+            - button "Track Your Order" [ref=f3e664] [cursor=pointer]
+          - listitem [ref=f3e671]:
+            - button "Help & FAQs" [ref=f3e672] [cursor=pointer]
+          - listitem [ref=f3e673]:
+            - button "Return & Refund Policy" [ref=f3e674] [cursor=pointer]
+          - listitem [ref=f3e675]:
+            - button "Terms & Conditions" [ref=f3e676] [cursor=pointer]
+          - listitem [ref=f3e677]:
+            - button "Privacy Policy" [ref=f3e678] [cursor=pointer]
+      - generic [ref=f3e679]:
+        - heading "Delivery & Guarantees" [level=4] [ref=f3e680]
+        - generic [ref=f3e682]:
+          - generic [ref=f3e683]:
+            - generic [ref=f3e684]:
+              - generic [ref=f3e685]: "Colombo & Suburbs:"
+              - generic [ref=f3e686]: 1 - 2 Business Days
+            - generic [ref=f3e687]:
+              - generic [ref=f3e688]: "Islandwide Outstation:"
+              - generic [ref=f3e689]: 2 - 4 Business Days
+            - generic [ref=f3e690]:
+              - generic [ref=f3e691]: "Return Window:"
+              - generic [ref=f3e692]: 7 Days Easy Return
+          - paragraph [ref=f3e693]: Direct doorstep dispatch via licensed courier networks with tracking updates across Sri Lanka.
+      - generic [ref=f3e694]:
+        - heading "Payment & Security" [level=4] [ref=f3e695]
+        - generic [ref=f3e697]:
+          - generic [ref=f3e698]:
+            - generic [ref=f3e699]: "Accepted Payment Methods:"
+            - generic [ref=f3e700]:
+              - generic [ref=f3e701]: KOKO (Pay in 3)
+              - generic [ref=f3e702]: LankaQR
+              - generic [ref=f3e703]: VISA / Master
+              - generic [ref=f3e704]: 💵 Cash on Delivery
+          - generic [ref=f3e705]:
+            - generic [ref=f3e706]: "Security Encryption:"
+            - generic [ref=f3e707]: 256-Bit SSL Protected
+          - generic [ref=f3e712]:
+            - generic [ref=f3e713]: "Store Currency:"
+            - generic [ref=f3e714]: Sri Lankan Rupee (LKR / Rs.)
+    - paragraph [ref=f3e716]: © 2026 LankaBuy. All rights reserved. Sri Lanka's Trusted E-Commerce Marketplace.

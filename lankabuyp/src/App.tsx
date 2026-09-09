@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { 
   Flame, 
   Truck, 
@@ -34,12 +35,13 @@ import { LoginPage } from './components/LoginPage';
 import { MyAddressesModal } from './components/MyAddressesModal';
 import { MyOrdersPage } from './components/MyOrdersPage';
 import { CustomerPolicyModal, PolicyTabType } from './components/CustomerPolicyModal';
+import { AuthLoadingScreen } from './components/AuthLoadingScreen';
 import { 
-  testFirebaseConnection, 
   saveOrderToFirestore, 
   auth, 
   onAuthStateChanged, 
-  getRedirectResult,
+  authPersistenceReady,
+  getFirebaseIdToken,
   saveUserProfileToFirestore,
   signOutUser,
   getUserAddressesFromFirestore, 
@@ -65,19 +67,57 @@ export default function App() {
 
   // User Authentication & Addresses State
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    try {
-      const saved = localStorage.getItem('lankabuy_current_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    return null;
   });
+  const [authState, setAuthState] = useState<'AUTH_LOADING' | 'AUTHENTICATED' | 'UNAUTHENTICATED'>('AUTH_LOADING');
+  const [authError, setAuthError] = useState<string | null>(null);
   const [userAddresses, setUserAddresses] = useState<UserAddress[]>([]);
   const [isAddressesModalOpen, setIsAddressesModalOpen] = useState(false);
   const [pendingCheckoutIntent, setPendingCheckoutIntent] = useState<PendingCheckoutIntent | null>(null);
 
   // Admin OAuth Verified Session State
   const [isAdminSessionActive, setIsAdminSessionActive] = useState(false);
+  const handledAuthUidRef = React.useRef<string | null>(null);
+  const adminCheckedUidRef = React.useRef<string | null>(null);
+
+  // Authoritative admin check: asks the BACKEND (/api/admin/me, server-side
+  // Firebase verification + ADMIN_ALLOWED_EMAIL) whether this Firebase user
+  // is an administrator. The frontend never decides adminship by email.
+  // On a positive answer we force-refresh the ID token once so the freshly
+  // provisioned custom claims (admin:true, synced async server-side) are
+  // present in all subsequent getIdTokenResult() reads (Firebase pattern).
+  const refreshAdminSession = async (fbUser: FirebaseUser) => {
+    try {
+      if (adminCheckedUidRef.current === fbUser.uid) return;
+      adminCheckedUidRef.current = fbUser.uid;
+      const token = await fbUser.getIdToken();
+      if (!token) return;
+      const res = await fetch('/api/admin/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        // Definitive non-admin (401/403) -> hide admin UI. Network throws
+        // below leave existing state untouched (never clobber on error).
+        if (res.status === 401 || res.status === 403) {
+          setIsAdminSessionActive(false);
+        }
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      if (data && data.success && data.authenticated) {
+        setIsAdminSessionActive(true);
+        try {
+          await fbUser.getIdToken(true);
+        } catch {
+          // Non-fatal: UI gating already resolved authoritatively above.
+        }
+      } else {
+        setIsAdminSessionActive(false);
+      }
+    } catch {
+      // Network/server unavailable: keep current admin UI state unchanged.
+    }
+  };
 
   // Active navigation tab
   const [activeNavTab, setActiveNavTab] = useState<'home' | 'products' | 'categories' | 'deals' | 'orders' | 'admin'>('home');
@@ -90,11 +130,10 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
-      // Guarantee initial landing always goes to LankaBuy Store main shop
-      if (p === '/admin' || p.startsWith('/admin')) {
-        window.history.replaceState({}, '', '/');
-        return '/';
-      }
+      // NOTE: /admin is intentionally preserved (not stripped). The AdminPortal
+      // shell only opens for a verified admin session (see effect below) and
+      // every /api/admin/* endpoint re-authorizes server-side, so keeping the
+      // path never leaks admin data to unauthorized visitors.
       return p;
     }
     return '/';
@@ -132,93 +171,45 @@ export default function App() {
     }
   };
 
-  // Server-side Admin Claim Verification (Strict 100% security by Email & Session)
-  const verifyAdminWithServer = async (userObj?: any) => {
+  const verifyCustomerSession = async (): Promise<void> => {
+    console.info('[Auth] /api/me request started');
     try {
-      // 1. Check existing session cookie
-      const meRes = await fetch('/api/admin/me', { credentials: 'include' });
-      if (meRes.ok) {
-        const meData = await meRes.json();
-        if (meData.success && meData.authenticated) {
-          setIsAdminSessionActive(true);
-          return true;
-        }
-      }
-
-      // 2. Check if logged-in user email is authorized via server endpoint
-      const targetUser = userObj || auth.currentUser;
-      const targetEmail = targetUser?.email || currentUser?.email;
-      if (targetEmail) {
-        const checkRes = await fetch('/api/admin/check-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: targetEmail }),
-        });
-        const checkData = await checkRes.json();
-        
-        // If email is NOT authorized, reject immediately
-        if (!checkData.success || !checkData.isAllowed) {
-          setIsAdminSessionActive(false);
-          return false;
-        }
-
-        // Email is allowed -> Exchange Firebase token for server admin session
-        if (targetUser?.getIdToken) {
-          const token = await targetUser.getIdToken();
-          if (token) {
-            const authRes = await fetch('/api/admin/google-auth', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ credential: token }),
-            });
-            const authData = await authRes.json();
-            if (authData.success && authData.authenticated) {
-              setIsAdminSessionActive(true);
-              return true;
-            }
-          }
-        }
-      }
-    } catch {
-      // Ignore network errors
-    }
-
-    setIsAdminSessionActive(false);
-    return false;
-  };
-
-  useEffect(() => {
-    verifyAdminWithServer();
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          const u = result.user;
-          const profile: UserProfile = {
-            uid: u.uid,
-            email: u.email || '',
-            displayName: u.displayName || u.email?.split('@')[0] || 'Customer',
-            photoURL: u.photoURL || undefined,
-            createdAt: new Date().toISOString(),
-          };
-          await saveUserProfileToFirestore(profile);
-          setCurrentUser(profile);
-          localStorage.setItem('lankabuy_current_user', JSON.stringify(profile));
-          const addrs = await getUserAddressesFromFirestore(u.uid);
-          setUserAddresses(addrs);
-          verifyAdminWithServer(u);
-          handleLoginSuccess(profile);
-        }
-      })
-      .catch((err) => {
-        console.warn('[Firebase Auth Redirect Error]:', err);
+      const token = await getFirebaseIdToken();
+      const response = await fetch('/api/me', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-  }, []);
+      console.info('[Auth] /api/me response', { status: response.status });
+      if (!response.ok) {
+        console.warn('[Auth] Backend session check deferred', { status: response.status });
+      }
+    } catch (error) {
+      console.warn('[Auth] Backend session check unavailable', {
+        message: error instanceof Error ? error.message : 'Request failed',
+      });
+    }
+  };
 
   // Sync Firebase Auth State
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let isMounted = true;
+    const applyAuthUser = async (user: FirebaseUser | null) => {
+      if (!isMounted) return;
+      console.info('[Auth] onAuthStateChanged fired', {
+        authenticated: Boolean(user),
+        hasUid: Boolean(user?.uid),
+        hasEmail: Boolean(user?.email),
+        currentUserExists: Boolean(auth.currentUser),
+      });
       if (user) {
+        if (handledAuthUidRef.current === user.uid) return;
+        setAuthError(null);
+        setAuthState('AUTHENTICATED');
+        handledAuthUidRef.current = user.uid;
+        console.info('[Auth] Firebase state changed: authenticated user present', {
+          provider: user.providerData.map((provider) => provider.providerId).join(',') || 'unknown',
+          hasUid: Boolean(user.uid),
+          hasEmail: Boolean(user.email),
+        });
         const profile: UserProfile = {
           uid: user.uid,
           email: user.email || '',
@@ -227,26 +218,46 @@ export default function App() {
           createdAt: new Date().toISOString(),
         };
         setCurrentUser(profile);
-        localStorage.setItem('lankabuy_current_user', JSON.stringify(profile));
-        const addrs = await getUserAddressesFromFirestore(user.uid);
-        setUserAddresses(addrs);
-        verifyAdminWithServer(user);
+        void saveUserProfileToFirestore(user)
+          .catch((error) => console.warn('[Auth] User profile sync deferred:', error));
+        void getUserAddressesFromFirestore(user.uid)
+          .then(setUserAddresses)
+          .catch((error) => console.warn('[Auth] Address restore deferred:', error));
         handleLoginSuccess(profile);
+        void verifyCustomerSession();
+        // Bind Firebase login -> authoritative backend admin check so the
+        // Admin navigation appears for the authorized admin email.
+        void refreshAdminSession(user);
       } else {
-        const local = localStorage.getItem('lankabuy_current_user');
-        if (local) {
-          try {
-            const parsed = JSON.parse(local);
-            setCurrentUser(parsed);
-            const addrs = await getUserAddressesFromFirestore(parsed.uid);
-            setUserAddresses(addrs);
-            return;
-          } catch {}
-        }
+        setAuthState('UNAUTHENTICATED');
+        console.info('[Auth] Firebase state changed: signed out');
+        handledAuthUidRef.current = null;
+        adminCheckedUidRef.current = null;
+        setCurrentUser(null);
+        setUserAddresses([]);
+        // NOTE: admin session intentionally NOT cleared here — a portal
+        // password/JWT session is independent of Firebase state and is
+        // terminated explicitly by handleSignOut / AdminPortal logout.
       }
-    });
+    };
 
-    return () => unsubscribe();
+    let unsubscribe: (() => void) | undefined;
+    void authPersistenceReady
+      .then(() => {
+        if (!isMounted) return;
+        unsubscribe = onAuthStateChanged(auth, applyAuthUser);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        console.error('[Auth] Persistence initialization failed:', error);
+        setAuthError('Authentication could not be initialized.');
+        setAuthState('UNAUTHENTICATED');
+      });
+
+    return () => {
+      isMounted = false;
+      unsubscribe?.();
+    };
   }, []);
 
   // Helper to determine if current URL is an order success / tracking page
@@ -279,21 +290,6 @@ export default function App() {
 
   // Check Admin OAuth Session from Server on mount
   useEffect(() => {
-    const verifyAdminSession = async () => {
-      try {
-        const res = await fetch('/api/admin/me', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.authenticated) {
-            setIsAdminSessionActive(true);
-          }
-        }
-      } catch {
-        setIsAdminSessionActive(false);
-      }
-    };
-    verifyAdminSession();
-
     // Check for ?admin=open query param or keyboard shortcut
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -311,6 +307,15 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Deep-link: when the URL is /admin and a verified admin session becomes
+  // active, open the portal shell. Unauthorized visitors keep seeing the
+  // normal storefront (portal requires the session; all admin APIs 401).
+  useEffect(() => {
+    if (isAdminSessionActive && (currentPath === '/admin' || currentPath.startsWith('/admin'))) {
+      setIsAdminPortalOpen(true);
+    }
+  }, [isAdminSessionActive, currentPath]);
 
   // Fetch Trending Products from Real-Signal Analytics Engine
   useEffect(() => {
@@ -330,8 +335,6 @@ export default function App() {
 
   // Synchronize browser history / back / forward navigation
   useEffect(() => {
-    testFirebaseConnection();
-
     const handlePopState = () => {
       const path = window.location.pathname;
       setCurrentPath(path);
@@ -362,7 +365,7 @@ export default function App() {
     onlyFreeShipping: false,
     onlyFlashDeals: false,
     sortBy: 'popular',
-    paymentMethodFilter: 'cod_available',
+    paymentMethodFilter: 'all',
   });
 
   const showToast = (msg: string) => {
@@ -409,9 +412,9 @@ export default function App() {
   // User Authentication Handlers
   const handleLoginSuccess = async (user: UserProfile) => {
     setCurrentUser(user);
-    localStorage.setItem('lankabuy_current_user', JSON.stringify(user));
-    const addrs = await getUserAddressesFromFirestore(user.uid);
-    setUserAddresses(addrs);
+    void getUserAddressesFromFirestore(user.uid)
+      .then(setUserAddresses)
+      .catch((error) => console.warn('[Auth] Address restore deferred:', error));
     showToast(`Welcome, ${user.displayName || 'Customer'}! 👋`);
 
     // Process pending checkout intent from state or localStorage
@@ -451,6 +454,10 @@ export default function App() {
       localStorage.removeItem('lankabuy_pre_auth_path');
       window.history.pushState({}, '', storedPreAuthPath);
       setCurrentPath(storedPreAuthPath);
+    } else if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      // Preserve /admin deep link: the portal opens automatically once the
+      // authoritative admin session verifies; others just see the store.
+      setCurrentPath(window.location.pathname);
     } else {
       window.history.pushState({}, '', '/');
       setCurrentPath('/');
@@ -466,16 +473,25 @@ export default function App() {
     setIsAdminSessionActive(false);
     setCurrentUser(null);
     setUserAddresses([]);
-    localStorage.removeItem('lankabuy_current_user');
     showToast('Signed out successfully.');
   };
 
   const handleSaveAddress = async (address: UserAddress) => {
-    const userId = currentUser?.uid || 'guest-user';
-    await saveUserAddressToFirestore(userId, address);
-    const updated = await getUserAddressesFromFirestore(userId);
-    setUserAddresses(updated);
-    showToast('Shipping address saved!');
+    const userId = currentUser?.uid;
+    if (!userId) {
+      showToast('Please sign in before saving a shipping address.');
+      throw new Error('Authenticated user is required.');
+    }
+    try {
+      await saveUserAddressToFirestore(userId, address);
+      const updated = await getUserAddressesFromFirestore(userId);
+      setUserAddresses(updated);
+      showToast('Shipping address saved!');
+    } catch (error) {
+      console.error('[Addresses] Save request failed:', error);
+      showToast(error instanceof Error ? error.message : 'Unable to save shipping address.');
+      throw error;
+    }
   };
 
   const handleDeleteAddress = async (addressId: string) => {
@@ -547,6 +563,10 @@ export default function App() {
       abortController.abort();
     };
   }, [filters.category, filters.searchQuery, filters.sortBy, filters.paymentMethodFilter]);
+
+  if (authState === 'AUTH_LOADING') {
+    return <AuthLoadingScreen error={authError} />;
+  }
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -970,7 +990,7 @@ export default function App() {
                   <CreditCard className="w-3.5 h-3.5 mr-1 text-slate-500 shrink-0" />
                   <span className="mr-1 text-slate-400 hidden xs:inline">Payment:</span>
                   <select
-                    value={filters.paymentMethodFilter || 'cod_available'}
+                    value={filters.paymentMethodFilter || 'all'}
                     onChange={(e) => setFilters((prev) => ({ ...prev, paymentMethodFilter: e.target.value as any }))}
                     className="bg-transparent font-bold text-slate-800 focus:outline-hidden cursor-pointer text-xs"
                   >
@@ -998,7 +1018,7 @@ export default function App() {
                 </div>
 
                 {/* Reset Filters */}
-                {(filters.category !== 'all' || filters.searchQuery || filters.onlyFreeShipping || filters.onlyFlashDeals || (filters.paymentMethodFilter && filters.paymentMethodFilter !== 'cod_available')) && (
+                {(filters.category !== 'all' || filters.searchQuery || filters.onlyFreeShipping || filters.onlyFlashDeals || (filters.paymentMethodFilter && filters.paymentMethodFilter !== 'all')) && (
                   <button
                     onClick={() =>
                       setFilters({
@@ -1010,7 +1030,7 @@ export default function App() {
                         onlyFreeShipping: false,
                         onlyFlashDeals: false,
                         sortBy: 'popular',
-                        paymentMethodFilter: 'cod_available',
+                        paymentMethodFilter: 'all',
                       })
                     }
                     className="text-slate-500 hover:text-orange-600 px-2 py-1 flex items-center cursor-pointer font-medium text-xs"

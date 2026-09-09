@@ -114,21 +114,13 @@ export function verifyPaymentWebhookSignature(options: {
   const { rawPayload, signatureHeader, timestampHeader, secretOverride } = options;
   const webhookSecret = secretOverride || getWebhookSecret();
 
-  // If no secret is configured in current environment, require it if in production
+  // Never process unsigned webhooks, including local development. A missing
+  // secret is a configuration error, not a reason to bypass verification.
   if (!webhookSecret) {
-    // In local sandbox development without a configured webhook secret, log security warning
-    if (process.env.NODE_ENV === 'production') {
-      return {
-        isValid: false,
-        code: 'MISSING_WEBHOOK_SECRET',
-        message: 'Server missing production CREEM_WEBHOOK_SECRET configuration.',
-      };
-    }
-    // In test/dev environment, allow passing if no secret is enforced yet
     return {
-      isValid: true,
-      code: 'DEV_UNENFORCED_SECRET',
-      message: 'Development sandbox mode: webhook secret unconfigured.',
+      isValid: false,
+      code: 'MISSING_WEBHOOK_SECRET',
+      message: 'Server is missing CREEM_WEBHOOK_SECRET configuration.',
     };
   }
 
@@ -320,6 +312,12 @@ export async function verifyAndSettlePayment(params: {
   transactionId?: string;
   source: 'WEBHOOK' | 'SERVER_API_CHECK' | 'LOCAL_SANDBOX';
   gatewayResponse?: any;
+  // Server-extracted Creem identifiers (from webhook payload / Creem API —
+  // never from the browser). Persisted onto the order for admin fulfillment.
+  creemCheckoutId?: string;
+  creemOrderId?: string;
+  creemCustomerId?: string;
+  currency?: string;
 }): Promise<{
   success: boolean;
   paymentStatus: 'PAID' | 'FAILED' | 'PENDING';
@@ -344,6 +342,17 @@ export async function verifyAndSettlePayment(params: {
   // 2. Direct Provider Status Verification for Live Gateways
   if (sessionId && source === 'SERVER_API_CHECK') {
     const verification = await fetchCreemCheckoutSession(sessionId);
+    if (!verification.success) {
+      // Fail CLOSED: gateway unreachable means payment is NOT verified.
+      // Never mark PAID on an inconclusive provider check.
+      return {
+        success: false,
+        paymentStatus: 'PENDING',
+        transactionId: effectiveTxnId,
+        order,
+        error: `Payment gateway verification unavailable: ${verification.error || 'unknown error'}`,
+      };
+    }
     if (verification.success && verification.session) {
       if (!verification.isPaid) {
         return {
@@ -371,6 +380,9 @@ export async function verifyAndSettlePayment(params: {
           };
         }
       }
+      if (verification.currency) {
+        order.currency = verification.currency;
+      }
     }
   }
 
@@ -380,6 +392,14 @@ export async function verifyAndSettlePayment(params: {
   order.transactionId = effectiveTxnId;
   order.cjStatus = 'Auto-Fulfilled';
   order.status = 'CONFIRMED';
+  // Payment consumed the held stock: RESERVED -> DEDUCTED (terminal).
+  order.inventoryStatus = 'DEDUCTED';
+  // Persist server-verified Creem identifiers for admin fulfillment.
+  if (params.creemCheckoutId) order.creemCheckoutId = params.creemCheckoutId;
+  else if (sessionId) order.creemCheckoutId = sessionId;
+  if (params.creemOrderId) order.creemOrderId = params.creemOrderId;
+  if (params.creemCustomerId) order.creemCustomerId = params.creemCustomerId;
+  if (params.currency) order.currency = params.currency;
 
   const historyEntry = {
     status: 'DROPCO_SYNCED' as const,

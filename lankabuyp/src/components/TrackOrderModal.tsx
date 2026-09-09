@@ -21,13 +21,13 @@ export const TrackOrderModal: React.FC<TrackOrderModalProps> = ({
   onClose,
   initialQuery = '',
 }) => {
-  if (!isOpen) return null;
-
   const [query, setQuery] = useState(initialQuery);
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState('');
   const [isAdvancing, setIsAdvancing] = useState(false);
+
+  if (!isOpen) return null;
 
   const handleSearch = async (searchTarget?: string) => {
     const q = (searchTarget !== undefined ? searchTarget : query).trim();

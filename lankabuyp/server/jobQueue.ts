@@ -24,10 +24,15 @@ export class JobQueueEngine {
   private jobHistory: QueueJob[] = [];
   private orderUpdateCallback?: (order: Order) => void;
   private logCallback?: (log: SupplierApiLog) => void;
+  private workerTimer: NodeJS.Timeout;
 
   constructor() {
     // Start asynchronous worker dispatch loop every 1000ms
-    setInterval(() => this.processNextJobs(), 1000);
+    this.workerTimer = setInterval(() => this.processNextJobs(), 1000);
+  }
+
+  public stop(): void {
+    clearInterval(this.workerTimer);
   }
 
   public setCallbacks(

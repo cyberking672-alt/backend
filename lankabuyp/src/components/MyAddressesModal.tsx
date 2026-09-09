@@ -23,8 +23,6 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
   onSelectAddress,
   selectedAddressId,
 }) => {
-  if (!isOpen) return null;
-
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -39,6 +37,10 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
   const [street, setStreet] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
+
+  if (!isOpen) return null;
 
   const resetForm = () => {
     setLabel('Home');
@@ -52,6 +54,8 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
     setIsDefault(false);
     setEditingId(null);
     setIsEditing(false);
+    setFormError(null);
+    setFieldErrors([]);
   };
 
   const handleProvinceSelect = (provName: string) => {
@@ -75,10 +79,11 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
     setLabel((addr.label as any) || 'Home');
     setFullName(addr.fullName);
     setPhone(addr.phone);
+    setCountry(addr.country || 'Sri Lanka');
     setStreet(addr.street);
     setCity(addr.city);
     const calculatedProvince = getProvinceForDistrict(addr.district);
-    setProvince(calculatedProvince);
+    setProvince(addr.province || calculatedProvince);
     setDistrict(addr.district);
     setIsDefault(!!addr.isDefault);
     setIsEditing(true);
@@ -86,16 +91,37 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !phone || !street || !city) return;
+    const fields = {
+      label,
+      country,
+      province,
+      district,
+      city,
+      street,
+      fullName,
+      phone,
+    };
+    const invalidFields = Object.entries(fields)
+      .filter(([, value]) => !value.trim())
+      .map(([field]) => field);
+    if (invalidFields.length > 0) {
+      setFieldErrors(invalidFields);
+      setFormError('Please complete the highlighted address fields.');
+      return;
+    }
 
     setLoading(true);
+    setFormError(null);
+    setFieldErrors([]);
     try {
       const newAddress: UserAddress = {
-        id: editingId || `addr-${Date.now()}`,
+        id: editingId || '',
         userId: addresses[0]?.userId || 'user-current',
         label,
         fullName,
         phone,
+        country,
+        province,
         street,
         city,
         district,
@@ -107,12 +133,19 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
       resetForm();
     } catch (err) {
       console.error('Error saving address:', err);
+      const error = err as Error & { invalidFields?: string[] };
+      setFieldErrors(error.invalidFields || []);
+      setFormError(error.message || 'Unable to save address. Please check the highlighted fields.');
     } finally {
       setLoading(false);
     }
   };
 
   const currentProvinceObject = SRI_LANKA_PROVINCES.find(p => p.nameEn === province) || SRI_LANKA_PROVINCES[0];
+  const fieldClass = (field: string) =>
+    `w-full bg-white border rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-hidden ${
+      fieldErrors.includes(field) ? 'border-red-500 ring-1 ring-red-200' : 'border-slate-300'
+    }`;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
@@ -154,6 +187,16 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                   Cancel
                 </button>
               </h4>
+              {formError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                  {formError}
+                  {fieldErrors.length > 0 && (
+                    <span className="mt-1 block font-medium">
+                      Check: {fieldErrors.map((field) => field === 'fullName' ? 'Recipient name' : field).join(', ')}.
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Tag Selection */}
               <div>
@@ -190,7 +233,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                   <select
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={`${fieldClass('country')} font-bold text-slate-800`}
                   >
                     <option value="Sri Lanka">🇱🇰 Sri Lanka</option>
                   </select>
@@ -204,7 +247,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                   <select
                     value={province}
                     onChange={(e) => handleProvinceSelect(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={`${fieldClass('province')} font-semibold text-slate-800`}
                   >
                     {SRI_LANKA_PROVINCES.map((p) => (
                       <option key={p.nameEn} value={p.nameEn}>
@@ -222,7 +265,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                   <select
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={`${fieldClass('district')} font-semibold text-slate-800`}
                   >
                     {currentProvinceObject.districts.map((d) => (
                       <option key={d} value={d}>
@@ -241,7 +284,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="e.g. Nugegoda / Kegalle / Kandy"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={fieldClass('city')}
                   />
                 </div>
 
@@ -254,7 +297,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     placeholder="e.g. No. 45, Temple Road"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={fieldClass('street')}
                   />
                 </div>
 
@@ -267,7 +310,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="e.g. Kasun Kalhara"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                    className={fieldClass('fullName')}
                   />
                 </div>
 
@@ -280,7 +323,7 @@ export const MyAddressesModal: React.FC<MyAddressesModalProps> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="e.g. 0771234567"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-hidden font-mono"
+                    className={`${fieldClass('phone')} font-mono`}
                   />
                 </div>
               </div>

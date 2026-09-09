@@ -21,6 +21,7 @@ import {
   Search
 } from 'lucide-react';
 import { Order, UserProfile } from '../types';
+import { auth } from '../lib/firebase';
 
 interface MyOrdersPageProps {
   currentUser: UserProfile | null;
@@ -108,7 +109,10 @@ export const MyOrdersPage: React.FC<MyOrdersPageProps> = ({
     setIsLoading(true);
     try {
       // 1. Fetch from server API with user identification
-      const res = await fetch(`/api/user/orders?email=${encodeURIComponent(currentUser.email)}&userId=${encodeURIComponent(currentUser.uid)}`);
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/user/orders', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
@@ -176,9 +180,13 @@ export const MyOrdersPage: React.FC<MyOrdersPageProps> = ({
   const submitReturnRequest = async () => {
     if (!selectedOrderForReturn || !returnReason.trim()) return;
     try {
+      const token = await auth.currentUser?.getIdToken();
       await fetch(`/api/orders/${selectedOrderForReturn.id}/request-return`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           orderId: selectedOrderForReturn.id,
           reason: returnReason,

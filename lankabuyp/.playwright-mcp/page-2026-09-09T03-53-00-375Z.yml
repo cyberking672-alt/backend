@@ -1,0 +1,179 @@
+- generic [ref=e3]:
+  - banner [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e19] [cursor=pointer]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: Lanka
+          - generic [ref=e22]: Buy
+        - generic [ref=e24]: Direct Marketplace • Sri Lanka
+      - generic [ref=e26]:
+        - button "All Categories" [ref=e28] [cursor=pointer]
+        - textbox "Search 1,000+ products (e.g. Drone, Earbuds, Watch)..." [ref=e33]
+        - button [ref=e34] [cursor=pointer]
+      - generic [ref=e38]:
+        - button "Orders" [ref=e39] [cursor=pointer]
+        - button "M MCP Test User" [ref=e47] [cursor=pointer]:
+          - generic [ref=e48]: M
+          - generic [ref=e49]: MCP Test User
+        - button "Cart" [ref=e52] [cursor=pointer]
+  - generic [ref=e722]:
+    - banner [ref=e723]:
+      - generic [ref=e724]:
+        - generic [ref=e725]:
+          - button "Back" [ref=e726] [cursor=pointer]
+          - heading "Secure Checkout Instant Buy" [level=1] [ref=e732]:
+            - generic [ref=e733]: Secure Checkout
+            - generic [ref=e734]: Instant Buy
+        - generic [ref=e735]: 256-Bit SSL Encrypted
+    - main [ref=e740]:
+      - generic [ref=e741]:
+        - generic [ref=e742]:
+          - generic [ref=e743]:
+            - generic [ref=e744]:
+              - generic [ref=e745]:
+                - generic [ref=e746]: "1"
+                - heading "Delivery Address (Sri Lanka)" [level=3] [ref=e747]
+              - button "Add / Manage" [ref=e751] [cursor=pointer]
+            - generic [ref=e754]:
+              - generic [ref=e755]:
+                - generic [ref=e756]: Select Delivery Address (1 Saved)
+                - generic [ref=e757]: Click an address to deliver
+              - generic [ref=e759] [cursor=pointer]:
+                - generic [ref=e760]:
+                  - generic [ref=e761]:
+                    - generic [ref=e762]: Home
+                    - generic [ref=e770]:
+                      - generic [ref=e771]: Default
+                      - generic [ref=e772]: Selected
+                  - paragraph [ref=e773]: MCP Test User
+                  - paragraph [ref=e777]: "0771234567"
+                  - paragraph [ref=e780]: No. 45, Temple Road, Nugegoda, Nugegoda
+                  - paragraph [ref=e781]: Colombo, Western Province (🇱🇰 Sri Lanka)
+                - generic [ref=e782]:
+                  - generic [ref=e783]: ✓ Deliver to this address
+                  - button "Edit" [ref=e784]
+              - button "+ Add Another Delivery Address" [ref=e786] [cursor=pointer]
+              - generic [ref=e789]:
+                - generic [ref=e790]: Delivery Landmark / Rider Notes (Optional)
+                - textbox "e.g. Near Majestic City / Call before delivery" [ref=e791]
+          - generic [ref=e792]:
+            - generic [ref=e793]:
+              - generic [ref=e794]:
+                - generic [ref=e795]: "2"
+                - heading "Payment Method" [level=3] [ref=e796]
+              - generic [ref=e799]: 3D Secure OTP
+            - generic [ref=e803] [cursor=pointer]:
+              - generic [ref=e804]: Card Payment
+              - generic [ref=e809]:
+                - generic [ref=e810]: VISA
+                - generic [ref=e814]:
+                  - generic [ref=e815]: G
+                  - generic [ref=e816]: Pay
+        - generic [ref=e818]:
+          - heading "Order Items (1) LankaBuy Direct" [level=3] [ref=e819]:
+            - generic [ref=e820]: Order Items (1)
+            - generic [ref=e821]: LankaBuy Direct
+          - generic [ref=e823]:
+            - generic [ref=e824]:
+              - img "Adhesive Mop Hook Bathroom Kitchen Wall Mount" [ref=e825]
+              - generic [ref=e826]:
+                - heading "Adhesive Mop Hook Bathroom Kitchen Wall Mount" [level=4] [ref=e827]
+                - generic [ref=e828]: "SKU: CJYD3135177"
+                - generic [ref=e830]:
+                  - generic [ref=e831]: Rs. 41
+                  - generic [ref=e832]:
+                    - button [disabled] [ref=e833] [cursor=pointer]
+                    - generic [ref=e835]: "1"
+                    - button [ref=e836] [cursor=pointer]
+            - generic [ref=e838]:
+              - generic [ref=e839]:
+                - generic [ref=e840]: "CJ Dropshipping Sourced URL:"
+                - link "Open Source" [ref=e842] [cursor=pointer]:
+                  - /url: https://cjdropshipping.com/product-detail.html?id=2609081149231608400
+              - link "https://cjdropshipping.com/product-detail.html?id=2609081149231608400" [ref=e848] [cursor=pointer]:
+                - /url: https://cjdropshipping.com/product-detail.html?id=2609081149231608400
+          - generic [ref=e849]:
+            - generic [ref=e850]: Have a Voucher or Promo Code?
+            - generic [ref=e854]:
+              - textbox "e.g. LANKA500" [ref=e855]
+              - button "Apply" [ref=e856] [cursor=pointer]
+            - generic [ref=e857]:
+              - button "🎁 LANKA500 (-Rs. 500)" [ref=e858] [cursor=pointer]
+              - button "⚡ FIRST10 (10% Off)" [ref=e859] [cursor=pointer]
+          - generic [ref=e860]:
+            - generic [ref=e861]:
+              - generic [ref=e862]: "Product Cost (Item Subtotal):"
+              - generic [ref=e863]: Rs. 41
+            - generic [ref=e864]: "Formula: (QKsource Price × Ex. Rate) + 20% Profit"
+            - generic [ref=e865]:
+              - generic [ref=e866]:
+                - generic [ref=e867]: Dynamic Shipping Cost
+                - generic [ref=e876]: Rs. 0
+              - generic [ref=e877]:
+                - generic [ref=e878]: (0g Weight)
+                - generic [ref=e879]: $0.00 USD
+              - generic [ref=e880]:
+                - generic [ref=e881]: "Formula: $0.00 USD × 315 LKR"
+                - generic [ref=e882]: 100% Weight Sourced
+            - generic [ref=e883]:
+              - generic [ref=e884]: "Final Total Payable:"
+              - generic [ref=e885]: Rs. 41
+            - generic [ref=e886]: Product Cost + Dynamic Shipping Cost
+          - button "Calculating Real Freight..." [disabled] [ref=e888]
+          - generic [ref=e892]:
+            - generic [ref=e893]: 7 Days Free Return
+            - generic [ref=e898]: 100% Genuine Guaranteed
+  - contentinfo [ref=e634]:
+    - generic [ref=e635]:
+      - generic [ref=e636]:
+        - generic [ref=e646] [cursor=pointer]:
+          - generic [ref=e647]: Lanka
+          - generic [ref=e648]: Buy
+        - paragraph [ref=e650]: Sri Lanka's trusted and fastest online shopping destination. Providing genuine high-quality products, verified seller inventories, and reliable express delivery across all 25 districts.
+        - generic [ref=e651]:
+          - generic [ref=e652]: 100% Genuine Products & Buyer Protection
+          - generic [ref=e657]: Express Doorstep Delivery Across Sri Lanka
+      - generic [ref=e664]:
+        - heading "Customer Service" [level=4] [ref=e665]
+        - list [ref=e667]:
+          - listitem [ref=e668]:
+            - button "Track Your Order" [ref=e669] [cursor=pointer]
+          - listitem [ref=e676]:
+            - button "Help & FAQs" [ref=e677] [cursor=pointer]
+          - listitem [ref=e678]:
+            - button "Return & Refund Policy" [ref=e679] [cursor=pointer]
+          - listitem [ref=e680]:
+            - button "Terms & Conditions" [ref=e681] [cursor=pointer]
+          - listitem [ref=e682]:
+            - button "Privacy Policy" [ref=e683] [cursor=pointer]
+      - generic [ref=e684]:
+        - heading "Delivery & Guarantees" [level=4] [ref=e685]
+        - generic [ref=e687]:
+          - generic [ref=e688]:
+            - generic [ref=e689]:
+              - generic [ref=e690]: "Colombo & Suburbs:"
+              - generic [ref=e691]: 1 - 2 Business Days
+            - generic [ref=e692]:
+              - generic [ref=e693]: "Islandwide Outstation:"
+              - generic [ref=e694]: 2 - 4 Business Days
+            - generic [ref=e695]:
+              - generic [ref=e696]: "Return Window:"
+              - generic [ref=e697]: 7 Days Easy Return
+          - paragraph [ref=e698]: Direct doorstep dispatch via licensed courier networks with tracking updates across Sri Lanka.
+      - generic [ref=e699]:
+        - heading "Payment & Security" [level=4] [ref=e700]
+        - generic [ref=e702]:
+          - generic [ref=e703]:
+            - generic [ref=e704]: "Accepted Payment Methods:"
+            - generic [ref=e705]:
+              - generic [ref=e706]: KOKO (Pay in 3)
+              - generic [ref=e707]: LankaQR
+              - generic [ref=e708]: VISA / Master
+              - generic [ref=e709]: 💵 Cash on Delivery
+          - generic [ref=e710]:
+            - generic [ref=e711]: "Security Encryption:"
+            - generic [ref=e712]: 256-Bit SSL Protected
+          - generic [ref=e717]:
+            - generic [ref=e718]: "Store Currency:"
+            - generic [ref=e719]: Sri Lankan Rupee (LKR / Rs.)
+    - paragraph [ref=e721]: © 2026 LankaBuy. All rights reserved. Sri Lanka's Trusted E-Commerce Marketplace.

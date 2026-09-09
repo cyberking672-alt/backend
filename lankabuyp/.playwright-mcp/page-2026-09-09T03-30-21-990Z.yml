@@ -1,0 +1,32 @@
+- generic [ref=e716]:
+  - banner [ref=e717]:
+    - button "Back to Store" [ref=e718] [cursor=pointer]
+    - generic [ref=e722]: Firebase Protected
+  - main [ref=e725]:
+    - generic [ref=e726]:
+      - generic [ref=e727]:
+        - generic [ref=e737] [cursor=pointer]:
+          - generic [ref=e738]: Lanka
+          - generic [ref=e739]: Buy
+        - heading "Welcome to LankaBuy" [level=1] [ref=e741]
+        - paragraph [ref=e742]: Sign in to access your orders, wishlist, and fast checkout
+      - button "Continue with Google" [ref=e744]
+      - generic [ref=e745]: Or continue with email
+      - generic [ref=e748]:
+        - generic [ref=e749]:
+          - generic [ref=e750]: Email Address
+          - textbox "customer@example.com" [ref=e752]
+        - generic [ref=e753]:
+          - generic [ref=e754]:
+            - generic [ref=e755]: Password
+            - generic [ref=e756] [cursor=pointer]: Forgot?
+          - generic [ref=e757]:
+            - textbox "At least 6 characters" [ref=e758]
+            - button [ref=e759] [cursor=pointer]
+        - button "Login with Email" [ref=e764] [cursor=pointer]
+      - paragraph [ref=e769]:
+        - text: Don't have an account?
+        - button "Create one for free" [ref=e770] [cursor=pointer]
+      - generic [ref=e771]: 256-Bit SSL Encrypted & Secured by Firebase
+  - contentinfo [ref=e776]:
+    - paragraph [ref=e777]: © 2026 LankaBuy Marketplace Sri Lanka. Islandwide Delivery & Customer Protection.

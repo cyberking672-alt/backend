@@ -4,32 +4,24 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, App, cert } from 'firebase-admin/app';
 import { getAuth, DecodedIdToken } from 'firebase-admin/auth';
 
-// Secret keys from environment or secure cryptographic runtime defaults
-const JWT_SECRET = process.env.JWT_SECRET || 'lankabuy_jwt_access_secret_secure_2026';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'lankabuy_jwt_refresh_secret_secure_2026';
+function getJwtSecret(name: 'JWT_SECRET' | 'JWT_REFRESH_SECRET'): string | null {
+  const value = process.env[name]?.trim();
+  return value && value.length >= 32 ? value : null;
+}
 
 // Initialize Firebase Admin SDK
 let firebaseAdminApp: App | null = null;
 try {
   if (!getApps().length) {
-    let projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || 'celestial-drive-38chg';
-    try {
-      const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
-      if (fs.existsSync(configPath)) {
-        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        if (cfg.projectId) projectId = cfg.projectId;
-      }
-    } catch {
-      // ignore json read issue
-    }
-    firebaseAdminApp = initializeApp({
-      projectId,
-    });
+    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    firebaseAdminApp = privateKey && clientEmail
+      ? initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), projectId })
+      : initializeApp(projectId ? { projectId } : undefined);
     console.log('[Security] Firebase Admin SDK initialized successfully for project:', projectId);
   } else {
     firebaseAdminApp = getApp();
@@ -51,9 +43,6 @@ export function getAdminAllowedEmails(): string[] {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
   
-  if (!list.includes('cyberking672@gmail.com')) list.push('cyberking672@gmail.com');
-  if (!list.includes('xggh67677@gmail.com')) list.push('xggh67677@gmail.com');
-
   return list;
 }
 
@@ -70,18 +59,71 @@ export function isAllowedAdminEmail(email: string): boolean {
   return allowedList.includes(cleanEmail);
 }
 
-export const ADMIN_ALLOWED_EMAIL = (process.env.ADMIN_ALLOWED_EMAIL || '').trim().toLowerCase();
+export function getConfiguredAdminEmail(): string {
+  return getAdminAllowedEmails()[0] || '';
+}
+
+function extractBearerToken(req: Request): string | null {
+  const header = req.headers.authorization;
+  return header?.startsWith('Bearer ') ? header.slice(7).trim() : null;
+}
+
+export async function requireCustomerAuth(req: Request, res: Response, next: NextFunction) {
+  const token = extractBearerToken(req);
+  console.info('[Auth] Protected request received', {
+    method: req.method,
+    path: req.path,
+    hasAuthorizationHeader: Boolean(req.headers.authorization),
+    hasBearerToken: Boolean(token),
+  });
+  const decoded = token
+    ? await verifyFirebaseIdToken(token)
+    : await verifyFirebaseSessionCookie(req.cookies?.lankabuy_session);
+  if (!decoded?.uid) {
+    console.warn('[Auth] Firebase token rejected', {
+      method: req.method,
+      path: req.path,
+      reason: token ? 'invalid-token' : 'missing-token',
+    });
+    return res.status(401).json({
+      success: false,
+      code: 'UNAUTHORIZED',
+      message: 'A valid Firebase authentication token is required.',
+    });
+  }
+
+  (req as any).firebaseUser = decoded;
+  return next();
+}
+
+export async function verifyFirebaseSessionCookie(cookie: string | undefined): Promise<DecodedIdToken | null> {
+  if (!cookie || !firebaseAdminApp) return null;
+  try {
+    return await getAuth(firebaseAdminApp).verifySessionCookie(cookie, true);
+  } catch (err: any) {
+    console.warn('[Auth] Firebase session cookie rejected', {
+      code: err?.code || 'unknown',
+      message: err?.message || 'Session cookie verification failed',
+    });
+    return null;
+  }
+}
 
 /**
  * Verifies a Firebase ID Token using Firebase Admin SDK
  */
 export async function verifyFirebaseIdToken(idToken: string): Promise<DecodedIdToken | null> {
   if (!idToken || typeof idToken !== 'string') return null;
+  if (!firebaseAdminApp) return null;
   try {
-    const auth = getAuth();
+    const auth = getAuth(firebaseAdminApp);
     const decoded = await auth.verifyIdToken(idToken, false);
     return decoded;
   } catch (err: any) {
+    console.warn('[Auth] Firebase Admin token verification failed', {
+      code: err?.code || 'unknown',
+      message: err?.message || 'Token verification failed',
+    });
     return null;
   }
 }
@@ -92,8 +134,9 @@ export async function verifyFirebaseIdToken(idToken: string): Promise<DecodedIdT
  */
 export async function syncAdminCustomClaims(uid: string, email: string): Promise<boolean> {
   if (!uid || !isAllowedAdminEmail(email)) return false;
+  if (!firebaseAdminApp) return false;
   try {
-    const auth = getAuth();
+    const auth = getAuth(firebaseAdminApp);
     await auth.setCustomUserClaims(uid, {
       admin: true,
       role: 'admin',
@@ -114,28 +157,61 @@ const activeRefreshTokens = new Set<string>();
  * 1. HELMET SECURITY HEADERS
  * Includes CSP, HSTS, Frameguard (supporting AI Studio iframe preview), XSS Protection, and MIME sniffing block
  */
+const isProduction = process.env.NODE_ENV === 'production';
+const contentSecurityPolicyDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: [
+    "'self'",
+    ...(isProduction ? [] : ["'unsafe-inline'", "'unsafe-eval'"]),
+    'https://apis.google.com',
+    'https://www.gstatic.com',
+  ],
+  styleSrc: [
+    "'self'",
+    ...(isProduction ? [] : ["'unsafe-inline'"]),
+    'https:',
+    'https://fonts.googleapis.com',
+  ],
+  imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+  fontSrc: ["'self'", 'https:', 'data:', 'https://fonts.gstatic.com'],
+  connectSrc: [
+    "'self'",
+    'https://identitytoolkit.googleapis.com',
+    'https://securetoken.googleapis.com',
+    'https://firestore.googleapis.com',
+    'https://*.firebaseapp.com',
+    ...(isProduction
+      ? []
+      : [
+          'ws://127.0.0.1:*',
+          'wss://127.0.0.1:*',
+          'http://127.0.0.1:*',
+          'ws://localhost:*',
+          'wss://localhost:*',
+          'http://localhost:*',
+        ]),
+    'https://accounts.google.com',
+  ],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'none'"],
+  frameSrc: [
+    "'self'",
+    'https://accounts.google.com',
+    'https://*.google.com',
+    'https://*.firebaseapp.com',
+    'https://*.creem.io',
+  ],
+};
+
 export const helmetMiddleware = helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https:', 'https://accounts.google.com'],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.googleapis.com'],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-      fontSrc: ["'self'", 'https:', 'data:', 'https://fonts.gstatic.com'],
-      connectSrc: ["'self'", 'https:', 'wss:', 'https://accounts.google.com'],
-      frameAncestors: [
-        "'self'",
-        'https://*.google.com',
-        'https://*.aistudio.google.com',
-        'https://ai.studio',
-        'https://*.run.app',
-        'http://localhost:*',
-      ],
-      frameSrc: ["'self'", 'https://accounts.google.com', 'https://*.creem.io', 'https://*.google.com'],
-    },
+    directives: contentSecurityPolicyDirectives,
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // Firebase Auth popup flows need the opener relationship to remain available
+  // while the OAuth window hands the credential back to the application.
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
   frameguard: false, // Frameguard handled by CSP frame-ancestors to permit AI Studio preview
   hsts: {
     maxAge: 63072000,
@@ -282,6 +358,12 @@ export interface AdminJwtPayload {
 }
 
 export function generateAdminTokens(email: string, name: string) {
+  const jwtSecret = getJwtSecret('JWT_SECRET');
+  const refreshSecret = getJwtSecret('JWT_REFRESH_SECRET');
+  if (!jwtSecret || !refreshSecret) {
+    throw new Error('JWT_SECRET and JWT_REFRESH_SECRET must be configured with at least 32 characters.');
+  }
+
   const payload: AdminJwtPayload = {
     email: email.toLowerCase(),
     name,
@@ -289,11 +371,11 @@ export function generateAdminTokens(email: string, name: string) {
     iss: 'lankabuy-secure-auth',
   };
 
-  const accessToken = jwt.sign(payload, JWT_SECRET, {
+  const accessToken = jwt.sign(payload, jwtSecret, {
     expiresIn: '15m', // 15-minute access token
   });
 
-  const refreshToken = jwt.sign({ email: email.toLowerCase(), role: 'admin' }, JWT_REFRESH_SECRET, {
+  const refreshToken = jwt.sign({ email: email.toLowerCase(), role: 'admin' }, refreshSecret, {
     expiresIn: '7d', // 7-day refresh token
   });
 
@@ -303,17 +385,21 @@ export function generateAdminTokens(email: string, name: string) {
 }
 
 export function verifyAccessToken(token: string): AdminJwtPayload | null {
+  const jwtSecret = getJwtSecret('JWT_SECRET');
+  if (!jwtSecret) return null;
   try {
-    return jwt.verify(token, JWT_SECRET) as AdminJwtPayload;
+    return jwt.verify(token, jwtSecret) as AdminJwtPayload;
   } catch {
     return null;
   }
 }
 
 export function verifyRefreshToken(token: string): { email: string; role: string } | null {
+  const refreshSecret = getJwtSecret('JWT_REFRESH_SECRET');
+  if (!refreshSecret) return null;
   try {
     if (!activeRefreshTokens.has(token)) return null;
-    return jwt.verify(token, JWT_REFRESH_SECRET) as { email: string; role: string };
+    return jwt.verify(token, refreshSecret) as { email: string; role: string };
   } catch {
     return null;
   }
@@ -324,25 +410,28 @@ export function invalidateRefreshToken(token: string) {
 }
 
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('admin_access_token', accessToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   res.cookie('admin_refresh_token', refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/api/admin',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 }
 
 export function clearAuthCookies(res: Response) {
-  res.clearCookie('admin_access_token', { sameSite: 'none', secure: true });
-  res.clearCookie('admin_refresh_token', { path: '/api/admin', sameSite: 'none', secure: true });
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieOptions = { sameSite: isProduction ? 'none' as const : 'lax' as const, secure: isProduction };
+  res.clearCookie('admin_access_token', cookieOptions);
+  res.clearCookie('admin_refresh_token', { ...cookieOptions, path: '/api/admin' });
 }
 
 /**
@@ -362,7 +451,8 @@ export async function authenticateAdminRequest(token: string): Promise<{
 
   // 1. Primary: Verify as Firebase ID Token using Firebase Admin SDK
   try {
-    const auth = getAuth();
+    if (!firebaseAdminApp) return null;
+    const auth = getAuth(firebaseAdminApp);
     const decoded = await auth.verifyIdToken(token, false);
     if (decoded && decoded.email) {
       const cleanEmail = decoded.email.trim().toLowerCase();
@@ -410,7 +500,7 @@ export async function authenticateAdminRequest(token: string): Promise<{
 export async function requireAdminAuth(req: Request, res: Response, next: NextFunction) {
   // Extract token from Bearer Authorization header or httpOnly cookie
   const authHeader = req.headers.authorization;
-  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  const bearerToken = extractBearerToken(req);
   const cookieToken = req.cookies?.admin_access_token;
   const token = bearerToken || cookieToken;
 
@@ -451,4 +541,3 @@ export async function requireAdminAuth(req: Request, res: Response, next: NextFu
     });
   }
 }
-

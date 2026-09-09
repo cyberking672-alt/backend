@@ -18,10 +18,10 @@ interface DevGuideModalProps {
 }
 
 export const DevGuideModal: React.FC<DevGuideModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'structure' | 'api-route' | 'validation' | 'security-headers' | 'local-run'>('api-route');
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  if (!isOpen) return null;
 
   const copyToClipboard = (text: string, sectionId: string) => {
     navigator.clipboard.writeText(text);
@@ -272,7 +272,7 @@ export async function POST(request: Request) {
 
     // 🛡️ SECURITY STEP E: Server-Side Isolated Supplier API Call
     const SUPPLIER_API_URL = process.env.DROPCO_API_URL || 'https://api.supplier.lankabuy.lk/v1/orders';
-    const SUPPLIER_API_KEY = process.env.DROPCO_API_KEY || 'lankabuy_live_sec_key_demo';
+    const SUPPLIER_API_KEY = process.env.DROPCO_API_KEY || 'replace-with-supplier-api-key';
 
     const supplierPayload = {
       api_key: SUPPLIER_API_KEY,
@@ -427,7 +427,7 @@ npm install zod lucide-react motion
 # 3. Configure your Environment Variables in .env.local
 cat << 'EOF' > .env.local
 # Supplier Dispatch Integration Secrets (Strictly Server-Side)
-DROPCO_API_KEY="lankabuy_live_sec_f982103a89bc44"
+DROPCO_API_KEY="replace-with-supplier-api-key"
 DROPCO_API_URL="https://api.supplier.lankabuy.lk/v1/orders"
 EOF
 

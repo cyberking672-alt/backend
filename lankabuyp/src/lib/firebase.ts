@@ -1,11 +1,10 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
+  browserLocalPersistence,
+  setPersistence,
   GoogleAuthProvider, 
-  signInWithCredential,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -29,12 +28,25 @@ import {
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
 import { Order, Product, UserProfile, UserAddress } from '../types';
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const viteEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env || {};
+const runtimeEnv = typeof process !== 'undefined' ? process.env : {};
+const envConfig = {
+  apiKey: viteEnv.VITE_FIREBASE_API_KEY || runtimeEnv.VITE_FIREBASE_API_KEY,
+  authDomain: viteEnv.VITE_FIREBASE_AUTH_DOMAIN || runtimeEnv.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: viteEnv.VITE_FIREBASE_PROJECT_ID || runtimeEnv.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: viteEnv.VITE_FIREBASE_STORAGE_BUCKET || runtimeEnv.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: viteEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || runtimeEnv.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: viteEnv.VITE_FIREBASE_APP_ID || runtimeEnv.VITE_FIREBASE_APP_ID,
+  measurementId: viteEnv.VITE_FIREBASE_MEASUREMENT_ID || runtimeEnv.VITE_FIREBASE_MEASUREMENT_ID,
+};
 
-const FIRESTORE_DATABASE_ID = 'ai-studio-darazdropecommer-c173a869-89f3-4585-bf4e-157daf451339';
+const app = !getApps().length ? initializeApp(envConfig) : getApp();
+
+const FIRESTORE_DATABASE_ID = viteEnv.VITE_FIREBASE_FIRESTORE_DATABASE_ID ||
+  runtimeEnv.VITE_FIREBASE_FIRESTORE_DATABASE_ID ||
+  'default';
 
 let firestoreInstance;
 try {
@@ -47,93 +59,90 @@ try {
 
 export const db = firestoreInstance;
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export { onAuthStateChanged, getRedirectResult };
+export const authPersistenceReady = setPersistence(auth, browserLocalPersistence);
+export { onAuthStateChanged };
 
-// Google Sign-In with GoogleAuthProvider (Supports Popup and Redirect fallback)
-export async function signInWithGoogle(): Promise<UserProfile | null> {
+function createGoogleProvider(): GoogleAuthProvider {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   provider.addScope('email');
   provider.addScope('profile');
+  return provider;
+}
+
+async function withAuthTimeout<T>(operation: Promise<T>, operationName: string, timeoutMs = 30000): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      const error = new Error(`${operationName} timed out. Check your network connection and try again.`);
+      error.name = 'AuthTimeoutError';
+      reject(error);
+    }, timeoutMs);
+  });
 
   try {
-    const result = await signInWithPopup(auth, provider);
-    if (!result?.user) return null;
-    const u = result.user;
-    const userProfile: UserProfile = {
-      uid: u.uid,
-      email: u.email || '',
-      displayName: u.displayName || u.email?.split('@')[0] || 'Customer',
-      photoURL: u.photoURL || undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    await saveUserProfileToFirestore(userProfile);
-    return userProfile;
-  } catch (err: any) {
-    console.error('[Firebase Auth Detailed Raw Error]:', err);
-    // Do not swallow any internal error, always pass with complete code and stack/customData
-    throw err;
+    return await Promise.race([operation, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
-// Real Google Sign-In with ID Token (Google Identity Services GSI -> Firebase Auth)
-export async function signInWithGoogleIdToken(idToken: string): Promise<UserProfile> {
+export async function signInWithGoogle(): Promise<UserProfile> {
+  await authPersistenceReady;
+  const provider = createGoogleProvider();
+
   try {
-    const credential = GoogleAuthProvider.credential(idToken);
-    const result = await signInWithCredential(auth, credential);
-    const u = result.user;
+    const { user } = await signInWithPopup(auth, provider);
     const userProfile: UserProfile = {
-      uid: u.uid,
-      email: u.email || '',
-      displayName: u.displayName || u.email?.split('@')[0] || 'Customer',
-      photoURL: u.photoURL || undefined,
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || user.email?.split('@')[0] || 'Customer',
+      photoURL: user.photoURL || undefined,
       createdAt: new Date().toISOString(),
     };
-    await saveUserProfileToFirestore(userProfile);
-    return userProfile;
-  } catch (err: any) {
-    console.error('[Firebase Auth GSI Raw Error]:', err);
-    throw err;
-  }
-}
 
-// Alternative Full-Page Redirect Sign-In for environments with strict popup restrictions
-export async function signInWithGoogleRedirect(): Promise<void> {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  provider.addScope('email');
-  provider.addScope('profile');
-  await signInWithRedirect(auth, provider);
-}
-
-// Check if user is returning from a redirect auth flow
-export async function checkRedirectAuthResult(): Promise<UserProfile | null> {
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      const u = result.user;
-      const userProfile: UserProfile = {
-        uid: u.uid,
-        email: u.email || '',
-        displayName: u.displayName || u.email?.split('@')[0] || 'Customer',
-        photoURL: u.photoURL || undefined,
-        createdAt: new Date().toISOString(),
-      };
-      await saveUserProfileToFirestore(userProfile);
-      return userProfile;
+    console.info('[Auth] Google popup sign-in succeeded', {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+    });
+    const idToken = await user.getIdToken();
+    const sessionResponse = await fetch('/api/auth/session', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!sessionResponse.ok) {
+      throw new Error('The server could not establish a secure session.');
     }
+    const sessionData = await sessionResponse.json();
+    if (!sessionData.authenticated || !sessionData.user?.uid) {
+      throw new Error('The server did not confirm the authenticated session.');
+    }
+    return {
+      ...userProfile,
+      uid: sessionData.user.uid,
+      email: sessionData.user.email || userProfile.email,
+      displayName: sessionData.user.displayName || userProfile.displayName,
+    };
   } catch (err: any) {
-    console.warn('[Firebase Auth Redirect Check]:', err);
+    console.error('[Firebase Auth] Google popup sign-in failed', {
+      code: err?.code || 'auth/unknown',
+      message: err?.message || 'Google sign-in failed.',
+    });
+    throw err;
   }
-  return null;
 }
 
 // Email & Password Sign In
 export async function signInWithEmail(email: string, pass: string): Promise<UserProfile> {
   try {
-    const res = await signInWithEmailAndPassword(auth, email.trim(), pass);
+    await authPersistenceReady;
+    const res = await withAuthTimeout(
+      signInWithEmailAndPassword(auth, email.trim(), pass),
+      'Email sign-in',
+    );
     const u = res.user;
     const userProfile: UserProfile = {
       uid: u.uid,
@@ -142,7 +151,6 @@ export async function signInWithEmail(email: string, pass: string): Promise<User
       photoURL: u.photoURL || undefined,
       createdAt: new Date().toISOString(),
     };
-    await saveUserProfileToFirestore(userProfile);
     return userProfile;
   } catch (err: any) {
     console.error('[Firebase Auth Error] Email sign in failed:', err);
@@ -153,7 +161,11 @@ export async function signInWithEmail(email: string, pass: string): Promise<User
 // Email & Password Sign Up / Registration
 export async function signUpWithEmail(email: string, pass: string, fullName?: string): Promise<UserProfile> {
   try {
-    const res = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+    await authPersistenceReady;
+    const res = await withAuthTimeout(
+      createUserWithEmailAndPassword(auth, email.trim(), pass),
+      'Account registration',
+    );
     const u = res.user;
     if (fullName && fullName.trim()) {
       try {
@@ -167,7 +179,7 @@ export async function signUpWithEmail(email: string, pass: string, fullName?: st
       photoURL: u.photoURL || undefined,
       createdAt: new Date().toISOString(),
     };
-    await saveUserProfileToFirestore(userProfile);
+    void saveUserProfileToFirestore(userProfile);
     return userProfile;
   } catch (err: any) {
     console.error('[Firebase Auth Error] Email registration failed:', err);
@@ -177,7 +189,8 @@ export async function signUpWithEmail(email: string, pass: string, fullName?: st
 
 // Sign Out
 export async function signOutUser(): Promise<void> {
-  await firebaseSignOut(auth);
+  await authPersistenceReady;
+  await withAuthTimeout(firebaseSignOut(auth), 'Sign out');
 }
 
 // User Profile Sync to Cloud Firestore: users/{uid}
@@ -223,55 +236,48 @@ export async function syncUserToFirestore(user: FirebaseUser | UserProfile): Pro
     console.warn('[Firebase] Firestore user sync notice:', err);
   }
 
-  // Backup in local storage
-  localStorage.setItem(`lankabuy_user_${uid}`, JSON.stringify(userProfile));
   return userProfile;
 }
 
 export const saveUserProfileToFirestore = syncUserToFirestore;
 export const loginWithGoogle = signInWithGoogle;
 
+export async function getFirebaseIdToken(): Promise<string | null> {
+  return auth.currentUser ? auth.currentUser.getIdToken() : null;
+}
+
 // Saved Address Management
 export async function getUserAddressesFromFirestore(userId: string): Promise<UserAddress[]> {
-  try {
-    const q = query(collection(db, `users/${userId}/addresses`));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      return snap.docs.map(d => d.data() as UserAddress);
-    }
-  } catch (err) {
-    console.warn('[Firebase] Error loading user addresses from Firestore:', err);
-  }
-
-  // Fallback to local storage
-  try {
-    const local = localStorage.getItem(`lankabuy_addresses_${userId}`);
-    if (local) return JSON.parse(local);
-  } catch {
-    // ignore
-  }
-  return [];
+  if (!userId || userId === 'guest-user') throw new Error('Authentication is required to load addresses.');
+  const token = await getFirebaseIdToken();
+  if (!token) throw new Error('Authentication is required to load addresses.');
+  const response = await fetch('/api/user/addresses', {
+    credentials: 'include',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.success) throw new Error(data?.message || 'Unable to load saved addresses.');
+  return Array.isArray(data.addresses) ? data.addresses as UserAddress[] : [];
 }
 
 export async function saveUserAddressToFirestore(userId: string, address: UserAddress): Promise<void> {
-  const path = `users/${userId}/addresses/${address.id}`;
-  try {
-    await setDoc(doc(db, `users/${userId}/addresses`, address.id), address, { merge: true });
-  } catch (err) {
-    console.warn('[Firebase] Error saving address to Firestore:', err);
-  }
-
-  // Also update local storage cache
-  try {
-    const existing = await getUserAddressesFromFirestore(userId);
-    const updated = existing.filter(a => a.id !== address.id);
-    if (address.isDefault) {
-      updated.forEach(a => a.isDefault = false);
-    }
-    updated.unshift(address);
-    localStorage.setItem(`lankabuy_addresses_${userId}`, JSON.stringify(updated));
-  } catch (err) {
-    console.warn('Local storage address cache update error:', err);
+  if (!userId || userId === 'guest-user') throw new Error('Please sign in before saving an address.');
+  const token = await getFirebaseIdToken();
+  if (!token) throw new Error('Authentication is required to save addresses.');
+  const response = await fetch('/api/user/addresses', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(address.id ? address : { ...address, id: undefined }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.success) {
+    const error = new Error(data?.message || 'Unable to save address.') as Error & { invalidFields?: string[] };
+    error.invalidFields = Array.isArray(data?.invalidFields) ? data.invalidFields : undefined;
+    throw error;
   }
 }
 
@@ -282,13 +288,6 @@ export async function deleteUserAddressFromFirestore(userId: string, addressId: 
     console.warn('[Firebase] Error deleting address from Firestore:', err);
   }
 
-  try {
-    const existing = await getUserAddressesFromFirestore(userId);
-    const updated = existing.filter(a => a.id !== addressId);
-    localStorage.setItem(`lankabuy_addresses_${userId}`, JSON.stringify(updated));
-  } catch (err) {
-    // ignore
-  }
 }
 
 export enum OperationType {

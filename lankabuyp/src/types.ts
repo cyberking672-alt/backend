@@ -63,6 +63,8 @@ export interface UserAddress {
   label: 'Home' | 'Work' | 'Other' | string;
   fullName: string;
   phone: string;
+  country: string;
+  province: string;
   street: string;
   city: string;
   district: string;
@@ -95,6 +97,10 @@ export interface ShippingAddress {
   province?: string;
   postalCode?: string;
   country: string;
+  // Optional: WhatsApp number + country calling code (e.g. '+94').
+  // Purely additive — older orders simply omit these fields.
+  whatsapp?: string;
+  countryCallingCode?: string;
 }
 
 export interface OrderItem {
@@ -110,6 +116,9 @@ export interface OrderItem {
   selectedSize?: string;
   cjDirectUrl?: string;
   supplierOrigin?: string;
+  // Optional QKSource product URL. Display-only: populated only when a real
+  // stored URL exists — NEVER reconstructed or invented client/server side.
+  qksourceUrl?: string;
 }
 
 export interface SupplierFulfillment {
@@ -132,7 +141,8 @@ export type OrderStatus =
   | 'SHIPPED'
   | 'DELIVERED'
   | 'FAILED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'REFUNDED';
 
 export interface Order {
   id: string;
@@ -151,6 +161,16 @@ export interface Order {
   paymentStatus: 'PAID' | 'PENDING_COD' | 'PENDING_ONLINE';
   paidAt?: string;
   transactionId?: string;
+  // Server-verified Creem payment identifiers (written ONLY by webhook /
+  // server-side settlement — never trusted from the frontend).
+  creemCheckoutId?: string;
+  creemOrderId?: string;
+  creemCustomerId?: string;
+  currency?: string;
+  // Inventory state is tracked SEPARATELY from payment state:
+  // RESERVED (stock held at checkout) -> DEDUCTED (paid/COD-confirmed, terminal)
+  // -> RELEASED (payment failed/cancelled/expired, stock restored).
+  inventoryStatus?: 'RESERVED' | 'DEDUCTED' | 'RELEASED';
   cjStatus?: 'Auto-Fulfilled' | 'Admin Approval Required' | 'DISPATCHED' | 'DELIVERED';
   status: OrderStatus;
   supplierResponse?: SupplierFulfillment;
@@ -395,5 +415,4 @@ export interface GlobalProduct {
 export type AliExpressVariant = GlobalProductVariant;
 export type AliExpressTaxBreakdown = GlobalTaxBreakdown;
 export type AliExpressProduct = GlobalProduct;
-
 

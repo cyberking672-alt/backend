@@ -1,0 +1,143 @@
+- generic [ref=f35e3]:
+  - banner [ref=f35e4]:
+    - generic [ref=f35e5]:
+      - generic [ref=f35e14] [cursor=pointer]:
+        - generic [ref=f35e15]:
+          - generic [ref=f35e16]: Lanka
+          - generic [ref=f35e17]: Buy
+        - generic [ref=f35e19]: Direct Marketplace • Sri Lanka
+      - generic [ref=f35e21]:
+        - button "All Categories" [ref=f35e23] [cursor=pointer]
+        - textbox "Search 1,000+ products (e.g. Drone, Earbuds, Watch)..." [ref=f35e28]
+        - button [ref=f35e29] [cursor=pointer]
+      - generic [ref=f35e33]:
+        - button "Orders" [active] [ref=f35e34] [cursor=pointer]
+        - button "M MCP Test User" [ref=f35e42] [cursor=pointer]:
+          - generic [ref=f35e43]: M
+          - generic [ref=f35e44]: MCP Test User
+        - button "Cart" [ref=f35e47] [cursor=pointer]
+  - generic [ref=f35e717]:
+    - generic [ref=f35e718]:
+      - generic [ref=f35e719]:
+        - button "Back to Marketplace" [ref=f35e720] [cursor=pointer]
+        - generic [ref=f35e723]:
+          - heading "My Orders & Purchases" [level=1] [ref=f35e724]
+          - generic [ref=f35e725]: 1 Order
+        - paragraph [ref=f35e726]: Displaying only your purchased items • 7-Day Return Guarantee Real-time Tracker
+      - button "Refresh" [ref=f35e728] [cursor=pointer]
+    - generic [ref=f35e734]:
+      - textbox "Search by Order ID or Product title..." [ref=f35e739]
+      - generic [ref=f35e740]:
+        - button "All Orders" [ref=f35e741] [cursor=pointer]
+        - button "Active / In Transit" [ref=f35e742] [cursor=pointer]
+        - button "Delivered" [ref=f35e743] [cursor=pointer]
+        - button "7-Day Return Eligible" [ref=f35e744] [cursor=pointer]
+    - generic [ref=f35e746]:
+      - generic [ref=f35e747]:
+        - generic [ref=f35e748]:
+          - generic [ref=f35e749]:
+            - generic [ref=f35e750]: Order ID
+            - text: LK-95321398
+          - generic [ref=f35e752]:
+            - generic [ref=f35e753]: Placed On
+            - text: Sep 9, 2026, 03:31 AM
+          - generic [ref=f35e755]:
+            - generic [ref=f35e756]: Payment
+            - generic [ref=f35e757]: Card via Creem.io (PAID)
+        - generic [ref=f35e760]: PENDING
+      - generic [ref=f35e767]:
+        - generic [ref=f35e768]:
+          - heading "Purchased Products (1)" [level=4] [ref=f35e769]
+          - generic [ref=f35e770]:
+            - img "Customized Transparent Self-adhesive Milk Tea Stickers" [ref=f35e771]
+            - generic [ref=f35e772]:
+              - heading "Customized Transparent Self-adhesive Milk Tea Stickers" [level=5] [ref=f35e773]
+              - generic [ref=f35e774]:
+                - generic [ref=f35e775]:
+                  - text: "Qty:"
+                  - strong [ref=f35e776]: "1"
+                - generic [ref=f35e777]: •
+                - generic [ref=f35e778]:
+                  - text: "Unit:"
+                  - strong [ref=f35e779]: Rs. 41
+            - generic [ref=f35e780]: Rs. 41
+          - generic [ref=f35e786]:
+            - strong [ref=f35e787]: MCP Test User
+            - text: (0771234567)
+            - paragraph [ref=f35e788]: No. 45, Temple Road, Nugegoda, Nugegoda, Colombo (00400)
+        - generic [ref=f35e789]:
+          - generic [ref=f35e790]:
+            - generic [ref=f35e791]:
+              - heading "7-Day Return Guarantee" [level=4] [ref=f35e796]
+              - generic [ref=f35e797]: (7 Days)
+            - generic [ref=f35e798]:
+              - generic [ref=f35e799]:
+                - generic [ref=f35e800]: Return Window Active
+                - generic [ref=f35e804]: 6d 23h 58m 3s
+              - paragraph [ref=f35e805]: You have 6 days and 23 hours left to request a return for this item.
+              - button "Request 7-Day Return" [ref=f35e806] [cursor=pointer]
+          - generic [ref=f35e807]:
+            - generic [ref=f35e808]: Current Parcel Location
+            - generic [ref=f35e812]:
+              - generic [ref=f35e813]: Colombo Order Processing Node
+              - generic [ref=f35e814]: Live
+            - paragraph [ref=f35e815]: "Checkout initialized with Creem.io 3D Secure MOR (Ref: ch_PjxUbnwbwEqswG2Bl2Rdp). Awaiting payment authorization."
+          - generic [ref=f35e816]:
+            - generic [ref=f35e817]:
+              - generic [ref=f35e818]: Total Paid
+              - generic [ref=f35e819]: Rs. 1,817
+            - button "Track Status" [ref=f35e820] [cursor=pointer]
+  - contentinfo [ref=f35e629]:
+    - generic [ref=f35e630]:
+      - generic [ref=f35e631]:
+        - generic [ref=f35e641] [cursor=pointer]:
+          - generic [ref=f35e642]: Lanka
+          - generic [ref=f35e643]: Buy
+        - paragraph [ref=f35e645]: Sri Lanka's trusted and fastest online shopping destination. Providing genuine high-quality products, verified seller inventories, and reliable express delivery across all 25 districts.
+        - generic [ref=f35e646]:
+          - generic [ref=f35e647]: 100% Genuine Products & Buyer Protection
+          - generic [ref=f35e652]: Express Doorstep Delivery Across Sri Lanka
+      - generic [ref=f35e659]:
+        - heading "Customer Service" [level=4] [ref=f35e660]
+        - list [ref=f35e662]:
+          - listitem [ref=f35e663]:
+            - button "Track Your Order" [ref=f35e664] [cursor=pointer]
+          - listitem [ref=f35e671]:
+            - button "Help & FAQs" [ref=f35e672] [cursor=pointer]
+          - listitem [ref=f35e673]:
+            - button "Return & Refund Policy" [ref=f35e674] [cursor=pointer]
+          - listitem [ref=f35e675]:
+            - button "Terms & Conditions" [ref=f35e676] [cursor=pointer]
+          - listitem [ref=f35e677]:
+            - button "Privacy Policy" [ref=f35e678] [cursor=pointer]
+      - generic [ref=f35e679]:
+        - heading "Delivery & Guarantees" [level=4] [ref=f35e680]
+        - generic [ref=f35e682]:
+          - generic [ref=f35e683]:
+            - generic [ref=f35e684]:
+              - generic [ref=f35e685]: "Colombo & Suburbs:"
+              - generic [ref=f35e686]: 1 - 2 Business Days
+            - generic [ref=f35e687]:
+              - generic [ref=f35e688]: "Islandwide Outstation:"
+              - generic [ref=f35e689]: 2 - 4 Business Days
+            - generic [ref=f35e690]:
+              - generic [ref=f35e691]: "Return Window:"
+              - generic [ref=f35e692]: 7 Days Easy Return
+          - paragraph [ref=f35e693]: Direct doorstep dispatch via licensed courier networks with tracking updates across Sri Lanka.
+      - generic [ref=f35e694]:
+        - heading "Payment & Security" [level=4] [ref=f35e695]
+        - generic [ref=f35e697]:
+          - generic [ref=f35e698]:
+            - generic [ref=f35e699]: "Accepted Payment Methods:"
+            - generic [ref=f35e700]:
+              - generic [ref=f35e701]: KOKO (Pay in 3)
+              - generic [ref=f35e702]: LankaQR
+              - generic [ref=f35e703]: VISA / Master
+              - generic [ref=f35e704]: 💵 Cash on Delivery
+          - generic [ref=f35e705]:
+            - generic [ref=f35e706]: "Security Encryption:"
+            - generic [ref=f35e707]: 256-Bit SSL Protected
+          - generic [ref=f35e712]:
+            - generic [ref=f35e713]: "Store Currency:"
+            - generic [ref=f35e714]: Sri Lankan Rupee (LKR / Rs.)
+    - paragraph [ref=f35e716]: © 2026 LankaBuy. All rights reserved. Sri Lanka's Trusted E-Commerce Marketplace.

@@ -1,0 +1,37 @@
+- generic [ref=e716]:
+  - banner [ref=e717]:
+    - button "Back to Store" [ref=e718] [cursor=pointer]
+    - generic [ref=e722]: Firebase Protected
+  - main [ref=e725]:
+    - generic [ref=e726]:
+      - generic [ref=e727]:
+        - generic [ref=e737] [cursor=pointer]:
+          - generic [ref=e738]: Lanka
+          - generic [ref=e739]: Buy
+        - heading "Create Real Account" [level=1] [ref=e778]
+        - paragraph [ref=e742]: Sign up with your credentials to sync orders & cart
+      - button "Continue with Google" [ref=e744]
+      - generic [ref=e745]: Or continue with email
+      - generic [ref=e748]:
+        - generic [ref=e779]:
+          - generic [ref=e780]: Full Name
+          - textbox "e.g. Kasun Perera" [ref=e782]
+        - generic [ref=e749]:
+          - generic [ref=e750]: Email Address
+          - generic [ref=e751]:
+            - generic [ref=e783]:
+              - generic [ref=e784]: Confirm Password
+              - textbox "Re-enter your password" [ref=e786]
+            - textbox "customer@example.com" [ref=e752]
+        - generic [ref=e753]:
+          - generic [ref=e754]: Password
+          - generic [ref=e757]:
+            - textbox "At least 6 characters" [ref=e758]
+            - button [ref=e759] [cursor=pointer]
+        - button "Create Real Account" [ref=e787] [cursor=pointer]
+      - paragraph [ref=e769]:
+        - text: Already have an account?
+        - button "Login here" [active] [ref=e788] [cursor=pointer]
+      - generic [ref=e771]: 256-Bit SSL Encrypted & Secured by Firebase
+  - contentinfo [ref=e776]:
+    - paragraph [ref=e777]: © 2026 LankaBuy Marketplace Sri Lanka. Islandwide Delivery & Customer Protection.

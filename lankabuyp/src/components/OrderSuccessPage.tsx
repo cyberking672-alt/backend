@@ -20,6 +20,7 @@ import {
   Navigation
 } from 'lucide-react';
 import { Order, UserProfile, DEFAULT_PRODUCT_IMAGE, OrderItem } from '../types';
+import { auth } from '../lib/firebase';
 
 interface OrderSuccessPageProps {
   order: Order | null;
@@ -142,7 +143,13 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
       if (currentUser.email) q.append('email', currentUser.email);
       if (currentUser.uid) q.append('userId', currentUser.uid);
 
-      const res = await fetch(`/api/user/orders?${q.toString()}`);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('Authentication is still initializing.');
+      }
+      const res = await fetch(`/api/user/orders?${q.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       if (res.ok && data.success && Array.isArray(data.orders)) {
         setUserOrders(data.orders);
@@ -230,9 +237,13 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({
     setIsSubmittingReturn(true);
     setReturnError('');
     try {
+      const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/orders/${encodeURIComponent(selectedOrder.id)}/request-return`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           reason: returnReason.trim(),
           userEmail: currentUser?.email || selectedOrder.customer.email,

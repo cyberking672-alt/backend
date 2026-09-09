@@ -27,11 +27,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
-        request.auth.token.role == 'admin' ||
-        (request.auth.token.email != null && (
-          request.auth.token.email.lower() == 'xggh67677@gmail.com' ||
-          request.auth.token.email.lower() == 'cyberking672@gmail.com'
-        ))
+        request.auth.token.role == 'admin'
       );
     }
 
@@ -87,8 +83,12 @@ service cloud.firestore {
           request.resource.data.id is string &&
           request.resource.data.fullName is string &&
           request.resource.data.phone is string &&
+          request.resource.data.country is string &&
+          request.resource.data.province is string &&
+          request.resource.data.district is string &&
           request.resource.data.street is string &&
-          request.resource.data.city is string;
+          request.resource.data.city is string &&
+          request.resource.data.isDefault is bool;
         allow update: if isOwner(userId) &&
           request.resource.data.id == resource.data.id;
         allow delete: if isOwner(userId) || isAdmin();
@@ -115,11 +115,9 @@ service cloud.firestore {
       );
 
       // Listing/querying orders: Only admins or authenticated users querying their own orders
-      allow list: if isAdmin() || (
-        isAuthenticated() && (
-          request.auth.uid != null
-        )
-      );
+      // Client order listings are served by the authenticated API, not by an
+      // unrestricted Firestore collection query.
+      allow list: if isAdmin();
 
       // Order creation:
       // Must be authenticated user for their own order (or admin).

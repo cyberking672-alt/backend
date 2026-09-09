@@ -6,7 +6,11 @@
 
 import { Product } from '../src/types.ts';
 import { DEFAULT_LOCAL_PRODUCTS } from '../src/data/defaultLocalProducts.ts';
-import { saveProductToFirestore, deleteProductFromFirestore, getAllProductsFromFirestore } from '../src/lib/firebase.ts';
+import {
+  getAllProductsFromFirestoreAdmin,
+  saveProductToFirestoreAdmin,
+  deleteProductFromFirestoreAdmin,
+} from './firebaseAdmin.ts';
 
 export interface PoolConfig {
   maxConnections: number;
@@ -46,7 +50,7 @@ export class DatabasePool {
    */
   public async initFromFirestore(): Promise<void> {
     try {
-      const firestoreProducts = await getAllProductsFromFirestore();
+      const firestoreProducts = await getAllProductsFromFirestoreAdmin();
       if (firestoreProducts && firestoreProducts.length > 0) {
         // Merge or replace products table with persistent Firestore records
         const map = new Map<string, Product>();
@@ -252,7 +256,7 @@ export class DatabasePool {
     this.rebuildIndexes();
 
     if (persist) {
-      saveProductToFirestore(updated).catch((err) => {
+      saveProductToFirestoreAdmin(updated).catch((err) => {
         console.error(`[dbPool] Firestore write error for product ${updated.id}:`, err);
       });
     }
@@ -264,7 +268,7 @@ export class DatabasePool {
     this.rebuildIndexes();
 
     if (persist) {
-      deleteProductFromFirestore(id).catch((err) => {
+      deleteProductFromFirestoreAdmin(id).catch((err) => {
         console.error(`[dbPool] Firestore delete error for product ${id}:`, err);
       });
     }

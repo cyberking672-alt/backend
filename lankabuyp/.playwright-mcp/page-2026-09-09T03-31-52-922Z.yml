@@ -1,0 +1,63 @@
+- generic [ref=f1e1]:
+  - status [ref=f1e2]:
+    - generic [ref=f1e3]: This is a test checkout — no real payment is taken and no card is charged.
+  - main [ref=f1e61]:
+    - generic [ref=f1e65]:
+      - generic [ref=f1e66]:
+        - generic [ref=f1e67]:
+          - heading "Customized Transparent Self-adhesive Milk Tea Stickers" [level=1] [ref=f1e68]
+          - generic [ref=f1e69]: $5.53
+        - separator [ref=f1e73]
+        - generic [ref=f1e74]:
+          - generic [ref=f1e75]: L
+          - text: by LankaBuy
+      - paragraph [ref=f1e803]: LankaBuy Verified Dropshipping Item
+    - generic [ref=f1e87]:
+      - generic [ref=f1e88]:
+        - generic [ref=f1e89]:
+          - generic [ref=f1e90] [cursor=pointer]: Email
+          - textbox "Email" [disabled]:
+            - /placeholder: johndoe@example.com
+            - text: mcptest20260909@example.com
+        - generic [ref=f1e91]:
+          - generic [ref=f1e92] [cursor=pointer]: Full name
+          - textbox "Full name" [disabled]:
+            - /placeholder: John Doe
+            - text: MCP Test User
+        - generic [ref=f1e93]:
+          - generic [ref=f1e94]: Billing address
+          - generic [ref=f1e95]:
+            - generic [ref=f1e97]:
+              - combobox [active] [ref=f1e98] [cursor=pointer]:
+                - generic: Sri Lanka
+              - combobox [aria-hidden] [ref=f1e101] [cursor=pointer]
+            - paragraph [ref=f1e147]: Postal Code is not a valid postal code.
+          - generic [ref=f1e105]:
+            - button "Add billing address details" [ref=f1e106] [cursor=pointer]
+            - generic "Sharing your billing address helps make sure your payment goes through." [ref=f1e107] [cursor=pointer]
+        - generic [ref=f1e110]:
+          - checkbox "I'm purchasing as a business" [ref=f1e111] [cursor=pointer]
+          - checkbox [aria-hidden]
+          - generic [ref=f1e112]: I'm purchasing as a business
+        - generic [ref=f1e115]:
+          - separator [ref=f1e116]
+          - generic [ref=f1e117]:
+            - generic [ref=f1e118]:
+              - generic [ref=f1e119]: Subtotal
+              - generic [ref=f1e120]: $5.53
+            - generic [ref=f1e121]:
+              - generic [ref=f1e122]: Total
+              - generic [ref=f1e123]: $5.53
+        - button "Continue to payment" [ref=f1e125] [cursor=pointer]
+        - generic [ref=f1e126]: Payments are secure and encrypted
+      - generic [ref=f1e131]:
+        - generic [ref=f1e132]:
+          - generic [ref=f1e133]: Merchant of Record services by
+          - link [ref=f1e134] [cursor=pointer]:
+            - /url: https://docs.creem.io/merchant-of-record/what-is
+        - generic [ref=f1e142]:
+          - link "Terms" [ref=f1e143] [cursor=pointer]:
+            - /url: /buyer-terms
+          - link "Privacy" [ref=f1e144] [cursor=pointer]:
+            - /url: /privacy
+  - alert [ref=f1e145]

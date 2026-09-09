@@ -235,10 +235,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     return headers;
   };
 
-  // Check existing session on mount
+  // Check an existing admin session only when the portal is opened.
   useEffect(() => {
-    checkAdminSession();
-  }, []);
+    if (isOpen) {
+      checkAdminSession();
+    }
+  }, [isOpen]);
 
   const checkAdminSession = async () => {
     try {
@@ -257,14 +259,27 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         }
       }
 
-      // Auto-fallback: If Firebase Auth is already signed in with an authorized admin email
-      if (auth.currentUser) {
-        const userEmail = (auth.currentUser.email || '').toLowerCase().trim();
-        if (userEmail === 'cyberking672@gmail.com' || userEmail === 'xggh67677@gmail.com') {
-          const idToken = await auth.currentUser.getIdToken();
-          if (idToken) {
-            await handleGoogleAuth(idToken);
+      // Auto-fallback: if Firebase Auth is already signed in, ask the BACKEND
+      // whether that email is authorized (hint only), then exchange the
+      // verified Firebase ID token server-side. No email is hardcoded here;
+      // ADMIN_ALLOWED_EMAIL on the server is the single source of truth.
+      if (auth.currentUser?.email) {
+        try {
+          const hintRes = await fetch('/api/admin/check-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: auth.currentUser.email }),
+          });
+          const hint = await hintRes.json().catch(() => null);
+          if (hint && hint.success && hint.isAllowed) {
+            // Force-refresh so async-provisioned custom claims are included.
+            const idToken = await auth.currentUser.getIdToken(true);
+            if (idToken) {
+              await handleGoogleAuth(idToken);
+            }
           }
+        } catch {
+          // Not an admin session; login view remains.
         }
       }
     } catch {
@@ -320,12 +335,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setAuthError('');
     try {
       if (auth.currentUser) {
-        const token = await auth.currentUser.getIdToken();
+        // Force-refresh: picks up async-provisioned admin custom claims.
+        const token = await auth.currentUser.getIdToken(true);
         await handleGoogleAuth(token);
       } else {
         const profile = await signInWithGoogle();
         if (profile) {
-          const token = await auth.currentUser?.getIdToken();
+          const token = await auth.currentUser?.getIdToken(true);
           if (token) {
             await handleGoogleAuth(token);
           }

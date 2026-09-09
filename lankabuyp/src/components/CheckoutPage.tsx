@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Product, CartItem, ShippingAddress, Order, DEFAULT_PRODUCT_IMAGE, UserAddress, UserProfile } from '../types';
 import { SRI_LANKA_PROVINCES, getProvinceForDistrict } from '../lib/sriLankaAddressData';
 import { getColorSwatch } from '../lib/colorUtils';
+import { getFirebaseIdToken } from '../lib/firebase';
 
 interface CheckoutPageProps {
   cartItems: CartItem[];
@@ -173,6 +174,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         street: defaultAddress.street,
         city: defaultAddress.city,
         district: defaultAddress.district,
+        province: defaultAddress.province || getProvinceForDistrict(defaultAddress.district),
         postalCode: '00400',
         country: 'Sri Lanka',
       };
@@ -188,6 +190,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       street: '',
       city: '',
       district: 'Colombo',
+      province: 'Western Province',
       postalCode: '',
       country: 'Sri Lanka',
     };
@@ -225,6 +228,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       street: addr.street,
       city: addr.city,
       district: addr.district,
+      province: addr.province || prov,
       postalCode: '00400',
       country: 'Sri Lanka',
     });
@@ -246,6 +250,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
           street: active.street,
           city: active.city,
           district: active.district,
+          province: active.province || prov,
           postalCode: '00400',
           country: 'Sri Lanka',
         }));
@@ -260,6 +265,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         street: '',
         city: '',
         district: 'Colombo',
+        province: 'Western Province',
         postalCode: '',
         country: 'Sri Lanka',
       }));
@@ -525,16 +531,23 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       const idempotencyKey = `idem-${formData.phone.replace(/[^0-9]/g, '')}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       
       // 2. CALL BACKEND API: Send payment details and order payload to /api/checkout
+      const idToken = await getFirebaseIdToken();
+      if (!idToken) {
+        throw new Error('Please sign in before placing an order.');
+      }
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Idempotency-Key': idempotencyKey,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           userId: currentUser?.uid || '',
           customer: {
             ...formData,
+            province: formData.province || selectedProvince,
+            postalCode: formData.postalCode || '00400',
             userId: currentUser?.uid || '',
             street: formData.street,
             landmark: formData.landmark || deliveryNote || '',

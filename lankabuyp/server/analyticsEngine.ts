@@ -25,10 +25,11 @@ class AnalyticsEngine {
   private trendingCache: TrendingMetric[] = [];
   private lastCalculationTime = new Date().toISOString();
   private scheduledJobTimer: NodeJS.Timeout | null = null;
+  private initialCalculationTimer: NodeJS.Timeout;
 
   constructor() {
     // Bootstrap initial calculation after db products are loaded
-    setTimeout(() => {
+    this.initialCalculationTimer = setTimeout(() => {
       this.recalculateTrendingScores();
     }, 1500);
 
@@ -37,6 +38,11 @@ class AnalyticsEngine {
       console.info('[Scheduled Job] Running hourly Trending Score recalculation from real on-site signals...');
       this.recalculateTrendingScores();
     }, 60 * 60 * 1000);
+  }
+
+  public stop(): void {
+    clearTimeout(this.initialCalculationTimer);
+    if (this.scheduledJobTimer) clearInterval(this.scheduledJobTimer);
   }
 
   /**
